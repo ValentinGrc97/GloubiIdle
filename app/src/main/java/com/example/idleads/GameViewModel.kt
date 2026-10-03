@@ -58,7 +58,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
             var ticks = 0
             while (true) {
-                delay(1000.milliseconds)
+                delay(1000.milliseconds / GameConfig.RATIO)
                 tick()
                 if (++ticks % 5 == 0) save()
             }
@@ -71,7 +71,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val earning = p.satiety >= GameConfig.GAIN_THRESHOLD
         val gain = if (earning) GameConfig.rate(boosted = now < p.boostUntil) else 0.0
         _player.value = p.copy(
-            satiety = max(0.0, p.satiety - GameConfig.DECAY_PER_SEC),
+            satiety = max(0.0, p.satiety - GameConfig.DECAY_PER_SEC/GameConfig.RATIO),
             progress = p.progress + gain,
             lastSeen = now,
             adsToday = if (p.adsDay != today(now)) 0 else p.adsToday,
@@ -87,24 +87,26 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private fun feed(amount: Double) {
         val p = _player.value
         _player.value = p.copy(satiety = min(100.0, p.satiety + amount))
-        _feedTick.value = _feedTick.value + 1
+        _feedTick.value += 1
     }
 
     /** Bouton 1 : +0,01 %. */
     fun feedSmall() = feed(GameConfig.FEED_SMALL)
+
+    fun feedBoost() = feed(GameConfig.FEED_BOOST)
 
     /** Bouton 3 : +1 %. */
     fun feedBig() = feed(GameConfig.FEED_BIG)
 
     fun canWatchAd(): Boolean = _player.value.adsToday < GameConfig.MAX_ADS_PER_DAY
 
+    fun boosted(): Boolean = _player.value.boostUntil > System.currentTimeMillis()
+
     /** Bouton 2 : à appeler uniquement quand AdMob confirme la récompense. */
     fun onAdRewarded() {
         val now = System.currentTimeMillis()
         val p = _player.value
-        val bonus = GameConfig.BASE_RATE * GameConfig.INSTANT_BONUS_SECONDS
         _player.value = p.copy(
-            progress = p.progress + bonus,
             boostUntil = max(now, p.boostUntil) + GameConfig.BOOST_MS,
             adsToday = p.adsToday + 1,
             adsDay = today(now)

@@ -48,11 +48,13 @@ class MainActivity : ComponentActivity() {
                     adReady = adReady,
                     offlineGain = offline,
                     feedTick = feedTick,
-                    onFeed = vm::feedSmall,
+                    onFeed = {
+                        if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
+                    },
                     onWatchAd = {
                         if (vm.canWatchAd()) adManager.show(this) { vm.onAdRewarded() }
                     },
-                    onFeedBig = vm::feedBig,
+                    onFeedBig = { adManager.show(this) { vm.feedBig() } },
                     onDismissOffline = vm::dismissOfflineGain
                 )
             }

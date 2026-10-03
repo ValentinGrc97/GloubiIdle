@@ -12,10 +12,10 @@ import androidx.room.Upsert
 @Entity(tableName = "player")
 data class Player(
     @PrimaryKey val id: Int = 1,
-    val satiety: Double = 50.0,     // barre de faim de l'animal, de 0 à 100 (%)
+    val satiety: Double = 0.0,     // barre de faim de l'animal, de 0 à 100 (%)
     val progress: Double = 0.0,     // progression cumulée : base du partage des gains
     val lastSeen: Long = System.currentTimeMillis(),
-    val boostUntil: Long = 0L,      // fin du boost x2 obtenu via pub rewarded
+    val boostUntil: Long = 0L,      // fin du boost x10 obtenu via pub rewarded
     val adsToday: Int = 0,
     val adsDay: Long = 0L           // jour (UTC) du compteur adsToday
 )

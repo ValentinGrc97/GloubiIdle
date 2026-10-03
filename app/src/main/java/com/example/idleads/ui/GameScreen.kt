@@ -40,99 +40,117 @@ fun GameScreen(
     onDismissOffline: () -> Unit
 ) {
     val boosted = nowMs < player.boostUntil
-    val boostLeftMin = if (boosted) ((player.boostUntil - nowMs) / 60_000L) + 1 else 0
+    val boostLeftMin = if (boosted) ((player.boostUntil - nowMs) / 1_000L) + 1 else 0
     val earning = player.satiety >= GameConfig.GAIN_THRESHOLD
     val rate = GameConfig.rate(boosted)
     val payout = GameConfig.estimatedPayoutEur(player.progress)
     val adsLeft = GameConfig.MAX_ADS_PER_DAY - player.adsToday
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier.fillMaxSize()
     ) {
-        Text("Gloubi", style = MaterialTheme.typography.headlineMedium)
-
-        if (offlineGain > 0) {
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Pendant votre absence : +${fmt(offlineGain)} de progression")
-                    OutlinedButton(onClick = onDismissOffline) { Text("OK") }
-                }
-            }
-        }
-
-        AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick)
-
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(
-                    "Faim : ${String.format(Locale.FRANCE, "%.2f", player.satiety)} %",
-                    style = MaterialTheme.typography.titleLarge
-                )
-                LinearProgressIndicator(
-                    progress = { (player.satiety / 100.0).toFloat().coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    if (earning) {
-                        "Gloubi est rassasié : +${String.format(Locale.FRANCE, "%.0f", rate)} /s" +
-                            if (boosted) " (boost x2, encore ~$boostLeftMin min)" else ""
-                    } else {
-                        "Atteignez ${GameConfig.GAIN_THRESHOLD.toInt()} % pour commencer à accumuler des gains." +
-                            if (boosted) " Boost actif : encore ~$boostLeftMin min." else ""
-                    },
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
-        }
-
-        // Bouton 1 : nourrir
-        Button(onClick = onFeed, modifier = Modifier.fillMaxWidth()) {
-            Text("Nourrir (+0,01 %)")
-        }
-
-        // Bouton 2 : boost via pub rewarded
-        Button(
-            onClick = onWatchAd,
-            enabled = adReady && adsLeft > 0,
-            modifier = Modifier.fillMaxWidth()
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                when {
-                    adsLeft <= 0 -> "Limite quotidienne atteinte"
-                    !adReady -> "Vidéo en cours de chargement…"
-                    else -> "Regarder une vidéo : boost x2 (30 min) · $adsLeft restantes aujourd'hui"
+            Text("Gloubi", style = MaterialTheme.typography.headlineMedium)
+
+            if (offlineGain > 0) {
+                Card(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("Pendant votre absence : +${fmt(offlineGain/100)} niveau")
+                        OutlinedButton(onClick = onDismissOffline) { Text("OK") }
+                    }
                 }
-            )
-        }
+            }
 
-        // Bouton 3 : grosse ration
-        Button(onClick = onFeedBig, modifier = Modifier.fillMaxWidth()) {
-            Text("Grosse ration (+1 %)")
-        }
+            AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick)
 
-        Card(Modifier.fillMaxWidth()) {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Votre part des gains", style = MaterialTheme.typography.titleMedium)
-                Text("Progression cumulée : ${fmt(player.progress)}")
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text(
+                        "Faim : ${String.format(Locale.FRANCE, "%.2f", player.satiety)} %",
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                    LinearProgressIndicator(
+                        progress = { (player.satiety / 100.0).toFloat().coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        if (earning) {
+                            "Gloubi est rassasié !\n" +
+                            if (boosted) "0,01% -> 0,1% /clic (boost x10, encore ~$boostLeftMin min)" else ""
+                            //"Gloubi est rassasié : +${String.format(Locale.FRANCE, "%.0f", rate)} /s" +
+                            //        if (boosted) " (boost x10, encore ~$boostLeftMin min)" else ""
+                        } else {
+                            "Atteignez ${GameConfig.GAIN_THRESHOLD.toInt()} % pour commencer à accumuler des XP et des gains !\n" +
+                                    if (boosted) " Boost actif : ${boostLeftMin/60}:${boostLeftMin%60}." else ""
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            // Bouton 1 : nourrir
+            Button(onClick = onFeed, modifier = Modifier.fillMaxWidth()) {
+                if(boosted) {
+                    Text("Nourrir (+" + GameConfig.FEED_BOOST + " %)")
+                }
+                else {
+                    Text("Nourrir (+" + GameConfig.FEED_SMALL + " %)")
+                }
+            }
+
+            // Bouton 2 : boost via pub rewarded
+            Button(
+                onClick = onWatchAd,
+                enabled = adReady && adsLeft > 0,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 Text(
-                    "Gain estimé : ${String.format(Locale.FRANCE, "%.2f", payout)} € " +
-                        "(retrait dès ${GameConfig.PAYOUT_THRESHOLD_EUR.toInt()} €)"
-                )
-                LinearProgressIndicator(
-                    progress = { (payout / GameConfig.PAYOUT_THRESHOLD_EUR).toFloat().coerceIn(0f, 1f) },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    "Estimation non contractuelle : le montant définitif dépend des revenus publicitaires réels " +
-                        "et de la vérification anti-fraude.",
-                    style = MaterialTheme.typography.bodySmall
+                    when {
+                        adsLeft <= 0 -> "Limite quotidienne atteinte"
+                        !adReady -> "Vidéo en cours de chargement…"
+                        else -> "Regarder une vidéo : boost x10 (5 min) · $adsLeft restantes aujourd'hui"
+                    }
                 )
             }
+
+            // Bouton 3 : grosse ration (lance aussi une pub, +1 % une fois la vidéo terminée)
+            Button(onClick = onFeedBig, enabled = adReady, modifier = Modifier.fillMaxWidth()) {
+                Text(if (adReady) "Grosse ration (+10 %) · vidéo" else "Vidéo en cours de chargement…")
+            }
+
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("Niveau du Gloubi : ${fmt(player.progress/100)}, prochain niveau dans ${fmt(100-player.progress%100)} XP")
+                    Text("Votre part des gains", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (earning)
+                            "Rythme actuel : +${String.format(Locale.FRANCE, "%.4f", GameConfig.estimatedPayoutEur(rate * 3600))} €/h"
+                        else
+                            "Aucun gain en cours (faim sous ${GameConfig.GAIN_THRESHOLD.toInt()} %)"
+                    )
+                    Text(
+                        "Gain estimé : ${String.format(Locale.FRANCE, "%.4f", payout)} € " +
+                                "(retrait dès ${GameConfig.PAYOUT_THRESHOLD_EUR.toInt()} €)"
+                    )
+                    LinearProgressIndicator(
+                        progress = { (payout / GameConfig.PAYOUT_THRESHOLD_EUR).toFloat().coerceIn(0f, 1f) },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "Estimation non contractuelle : le montant définitif dépend des revenus publicitaires réels ",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
+            }
         }
+
+        BannerAdView()
     }
 }
