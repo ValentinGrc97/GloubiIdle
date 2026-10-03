@@ -37,7 +37,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
             val saved = dao.get() ?: Player(lastSeen = now)
             var p = if (saved.adsDay != today(now)) saved.copy(adsToday = 0, adsDay = today(now)) else saved
 
-            // Hors-ligne : la faim baisse, et les gains ne courent que tant que l'animal reste >= 99 %
+            // Hors-ligne : la faim baisse, et les gains ne courent que tant que l'animal reste >= 95 %
             val elapsedMs = (now - saved.lastSeen).coerceIn(0L, GameConfig.MAX_OFFLINE_MS)
             val aboveMs =
                 if (saved.satiety >= GameConfig.GAIN_THRESHOLD)
@@ -69,7 +69,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val now = System.currentTimeMillis()
         val p = _player.value
         val earning = p.satiety >= GameConfig.GAIN_THRESHOLD
-        val gain = if (earning) GameConfig.rate(boosted = now < p.boostUntil) else 0.0
+        val gain = if (earning) GameConfig.BASE_RATE else 0.0
         _player.value = p.copy(
             satiety = max(0.0, p.satiety - GameConfig.DECAY_PER_SEC/GameConfig.RATIO),
             progress = p.progress + gain,

@@ -7,8 +7,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -42,8 +49,6 @@ fun GameScreen(
     val boosted = nowMs < player.boostUntil
     val boostLeftMin = if (boosted) ((player.boostUntil - nowMs) / 1_000L) + 1 else 0
     val earning = player.satiety >= GameConfig.GAIN_THRESHOLD
-    val rate = GameConfig.rate(boosted)
-    val payout = GameConfig.estimatedPayoutEur(player.progress)
     val adsLeft = GameConfig.MAX_ADS_PER_DAY - player.adsToday
 
     Column(
@@ -83,12 +88,10 @@ fun GameScreen(
                     Text(
                         if (earning) {
                             "Gloubi est rassasié !\n" +
-                            if (boosted) "0,01% -> 0,1% /clic (boost x10, encore ~$boostLeftMin min)" else ""
-                            //"Gloubi est rassasié : +${String.format(Locale.FRANCE, "%.0f", rate)} /s" +
-                            //        if (boosted) " (boost x10, encore ~$boostLeftMin min)" else ""
+                            if (boosted) "Boost actif (${boostLeftMin/60}:${boostLeftMin%60} restants)" else ""
                         } else {
-                            "Atteignez ${GameConfig.GAIN_THRESHOLD.toInt()} % pour commencer à accumuler des XP et des gains !\n" +
-                                    if (boosted) " Boost actif : ${boostLeftMin/60}:${boostLeftMin%60}." else ""
+                            "Atteignez ${GameConfig.GAIN_THRESHOLD.toInt()} % pour commencer à accumuler des XP !\n" +
+                                    if (boosted) "Boost actif : ${boostLeftMin/60}:${boostLeftMin%60}" else ""
                         },
                         style = MaterialTheme.typography.bodyMedium
                     )
@@ -111,42 +114,39 @@ fun GameScreen(
                 enabled = adReady && adsLeft > 0,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    when {
-                        adsLeft <= 0 -> "Limite quotidienne atteinte"
-                        !adReady -> "Vidéo en cours de chargement…"
-                        else -> "Regarder une vidéo : boost x10 (5 min) · $adsLeft restantes aujourd'hui"
-                    }
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Rounded.PlayCircle,
+                        contentDescription = "Pub vidéo",
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        when {
+                            adsLeft <= 0 -> "Limite quotidienne atteinte"
+                            !adReady -> "Vidéo en cours de chargement…"
+                            else -> "Boost nourriture x10 (5 min) · $adsLeft restants aujourd'hui"
+                        }
+                    )
+                }
             }
 
             // Bouton 3 : grosse ration (lance aussi une pub, +1 % une fois la vidéo terminée)
             Button(onClick = onFeedBig, enabled = adReady, modifier = Modifier.fillMaxWidth()) {
-                Text(if (adReady) "Grosse ration (+10 %) · vidéo" else "Vidéo en cours de chargement…")
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Rounded.PlayCircle,
+                        contentDescription = "Pub vidéo",
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (adReady) "Grosse ration (+10 %)" else "Vidéo en cours de chargement…")
+                }
             }
 
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Niveau du Gloubi : ${fmt(player.progress/100)}, prochain niveau dans ${fmt(100-player.progress%100)} XP")
-                    Text("Votre part des gains", style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        if (earning)
-                            "Rythme actuel : +${String.format(Locale.FRANCE, "%.4f", GameConfig.estimatedPayoutEur(rate * 3600))} €/h"
-                        else
-                            "Aucun gain en cours (faim sous ${GameConfig.GAIN_THRESHOLD.toInt()} %)"
-                    )
-                    Text(
-                        "Gain estimé : ${String.format(Locale.FRANCE, "%.4f", payout)} € " +
-                                "(retrait dès ${GameConfig.PAYOUT_THRESHOLD_EUR.toInt()} €)"
-                    )
-                    LinearProgressIndicator(
-                        progress = { (payout / GameConfig.PAYOUT_THRESHOLD_EUR).toFloat().coerceIn(0f, 1f) },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Text(
-                        "Estimation non contractuelle : le montant définitif dépend des revenus publicitaires réels ",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                    Text("Niveau du Gloubi : "+ player.progress.toInt()/100+", prochain niveau dans ${fmt(100-player.progress%100)} XP")
                 }
             }
         }
