@@ -12,12 +12,12 @@ import androidx.room.Upsert
 @Entity(tableName = "player")
 data class Player(
     @PrimaryKey val id: Int = 1,
-    val satiety: Double = 50.0,     // barre de faim de l'animal, de 0 à 100 (%)
-    val progress: Double = 0.0,     // progression cumulée : base du partage des gains
-    val lastSeen: Long = System.currentTimeMillis(),
-    val boostUntil: Long = 0L,      // fin du boost x10 obtenu via pub rewarded
-    val autoFeedUntil: Long = 0L,   // timestamp de fin de l'auto-nourrissage (0 = inactif)
-    val adsToday: Int = 0,
+    val satiety: Double = 50.0,                         // barre de faim de l'animal, de 0 à 100 (%)
+    val progress: Double = 0.0,                         // progression cumulée -> XP
+    val lastSeen: Long = System.currentTimeMillis(),    // timestamp de la dernière interaction
+    val boostUntil: Long = 0L,                          // fin du boost x10 obtenu via pub rewarded
+    val autoFeedUntil: Long = 0L,                       // timestamp de fin de l'auto-nourrissage (0 = inactif)
+    val adsToday: Int = 0,                              // nombre d'Ads vues sur la journée
     val adsDay: Long = 0L
 )
 
@@ -41,7 +41,7 @@ abstract class AppDb : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext, AppDb::class.java, "idle.db"
                 )
-                    .fallbackToDestructiveMigration()
+                    .fallbackToDestructiveMigration(false)
                     .build().also { instance = it }
             }
     }
