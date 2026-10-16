@@ -28,10 +28,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Incrémenté à chaque repas : déclenche l'animation de nourriture/bouche. */
     private val _feedTick = MutableStateFlow(0)
     val feedTick: StateFlow<Int> = _feedTick.asStateFlow()
+    private val _bigFeedTick = MutableStateFlow(0)
+    val bigFeedTick: StateFlow<Int> = _bigFeedTick.asStateFlow()
+    private val _pendingBigFeed = MutableStateFlow(false)
 
     private fun today(now: Long) = now / 86_400_000L
-    private fun autoFeedActive(now: Long = System.currentTimeMillis()) =
-        _player.value.autoFeedUntil > now
 
     init {
         viewModelScope.launch {
@@ -95,7 +96,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private fun feed(amount: Double) {
         val p = _player.value
         _player.value = p.copy(satiety = min(100.0, p.satiety + amount))
-        _feedTick.value += 1
+        when {
+            amount == 10.0 -> _bigFeedTick.value++
+            else -> _feedTick.value++
+        }
+
     }
 
     /** Bouton 1 : +0,02 %. */
@@ -104,11 +109,12 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun feedBoost() = feed(GameConfig.FEED_BOOST)
 
     /** Bouton 3 : +10 %. */
-    fun feedBig() = feed(GameConfig.FEED_BIG)
+    fun feedBig() {
+        feed(GameConfig.FEED_BIG)
+    }
 
     fun canWatchAd(): Boolean = _player.value.adsToday < GameConfig.MAX_ADS_PER_DAY
     fun boosted(): Boolean = _player.value.boostUntil > System.currentTimeMillis()
-    fun autoFeedActive(): Boolean = autoFeedActive(System.currentTimeMillis())
 
     /** Appelé quand AdMob confirme la récompense pour le boost. */
     fun onBoostAdRewarded() {
@@ -122,6 +128,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         save()
     }
 
+    /** Appelé quand AdMob confirme la récompense pour la grosse ration. */
+    fun onBigFeedAdRewarded() {
+        _pendingBigFeed.value = true  // on marque, on ne feed pas encore
+    }
+
     /** Appelé quand AdMob confirme la récompense pour l'auto-nourrissage. */
     fun onAutoFeedRewarded() {
         val now = System.currentTimeMillis()
@@ -133,4 +144,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissOfflineGain() { _offlineGain.value = 0.0 }
+
+    fun consumePendingBigFeed() {
+        if (_pendingBigFeed.value) {
+            _pendingBigFeed.value = false
+            feedBig()
+        }
+    }
 }

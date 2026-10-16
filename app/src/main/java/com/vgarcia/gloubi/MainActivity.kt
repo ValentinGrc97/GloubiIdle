@@ -1,7 +1,6 @@
 package com.vgarcia.gloubi
 
 import android.app.NotificationManager
-import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -73,6 +72,7 @@ class MainActivity : ComponentActivity() {
                 val offline by vm.offlineGain.collectAsState()
                 val adReady by adManager.isReady.collectAsState()
                 val feedTick by vm.feedTick.collectAsState()
+                val bigFeedTick by vm.bigFeedTick.collectAsState()
                 var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
                 LaunchedEffect(Unit) {
                     while (true) { now = System.currentTimeMillis(); delay(1000.milliseconds) }
@@ -84,13 +84,16 @@ class MainActivity : ComponentActivity() {
                     adReady = adReady,
                     offlineGain = offline,
                     feedTick = feedTick,
+                    bigFeedTick = bigFeedTick,
                     onFeed = {
                         if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
                     },
                     onWatchBoostAd = {
                         if (vm.canWatchAd()) adManager.show(this) { vm.onBoostAdRewarded() }
                     },
-                    onFeedBig = { adManager.show(this) { vm.feedBig() } },
+                    onFeedBig = {
+                        adManager.show(this) { vm.onBigFeedAdRewarded() }
+                    },
                     onToggleAutoFeed = {
                         adManager.show(this) { vm.onAutoFeedRewarded() }
                     },
@@ -102,8 +105,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        vm.consumePendingBigFeed()
         // L'utilisateur a ouvert l'appli : les notifications sont "vues"
-        getSharedPreferences(HungerNotificationWorker.PREFS_NAME, Context.MODE_PRIVATE)
+        getSharedPreferences(HungerNotificationWorker.PREFS_NAME, MODE_PRIVATE)
             .edit {
                 putBoolean(HungerNotificationWorker.KEY_THRESHOLD_PENDING, false)
                     .putBoolean(HungerNotificationWorker.KEY_EMPTY_PENDING, false)

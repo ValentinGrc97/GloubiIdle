@@ -23,11 +23,13 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Gloubi : une boule de poils à oreilles rondes.
@@ -37,7 +39,7 @@ import kotlin.math.sin
  * - ouvre la bouche et attrape une croquette à chaque repas
  */
 @Composable
-fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
+fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifier = Modifier) {
     val happy = satiety >= 99f
     val sad = satiety < 20f
 
@@ -98,6 +100,36 @@ fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
             launch { food.animateTo(1f, tween(260, easing = LinearEasing)) }
             mouth.animateTo(1f, tween(110))
             mouth.animateTo(0f, tween(200))
+        }
+    }
+
+    // Animation grosse ration
+    val bigFoodScale = remember { Animatable(0f) }
+    val bigFoodAlpha = remember { Animatable(0f) }
+    val bigFoodY    = remember { Animatable(0f) }
+
+    LaunchedEffect(bigFeedTick) {
+        if (bigFeedTick > 0) {
+            // Reset
+            bigFoodScale.snapTo(0f)
+            bigFoodAlpha.snapTo(1f)
+            bigFoodY.snapTo(0f)
+            // Apparition + montée vers la bouche + disparition
+            launch {
+                bigFoodScale.animateTo(1f, tween(200, easing = FastOutSlowInEasing))
+                bigFoodScale.animateTo(1.3f, tween(150))
+                bigFoodScale.animateTo(0f, tween(200))
+            }
+            launch {
+                bigFoodY.animateTo(1f, tween(550, easing = LinearEasing))
+            }
+            launch {
+                delay(350.milliseconds)
+                bigFoodAlpha.animateTo(0f, tween(200))
+            }
+            // Ouvrir la bouche plus grand
+            mouth.animateTo(1f, tween(130))
+            mouth.animateTo(0f, tween(250))
         }
     }
 
@@ -188,6 +220,44 @@ fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
             drawCircle(Color(0xFF9C5F2C), r * 0.04f, Offset(cx + r * 0.03f, fy - r * 0.02f))
         }
 
+        // Grosse ration (steak / os)
+        if (bigFeedTick > 0 && bigFoodScale.value > 0f) {
+            val by = h * 0.02f + (my - h * 0.02f) * bigFoodY.value
+            val bs = r * 0.28f * bigFoodScale.value
+            val alpha = bigFoodAlpha.value
+
+            // Corps du steak
+            drawOval(
+                Color(0xFFB5541A).copy(alpha = alpha),
+                Offset(cx - bs * 0.9f, by - bs * 0.5f),
+                Size(bs * 1.8f, bs)
+            )
+            // Gras
+            drawOval(
+                Color(0xFFE8C97A).copy(alpha = alpha),
+                Offset(cx - bs * 0.6f, by - bs * 0.3f),
+                Size(bs * 1.2f, bs * 0.5f)
+            )
+            // Os gauche
+            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx - bs * 1.0f, by))
+            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx - bs * 1.0f, by - bs * 0.5f))
+            drawLine(
+                Color(0xFFF0E0C0).copy(alpha = alpha),
+                Offset(cx - bs * 1.0f, by),
+                Offset(cx - bs * 1.0f, by - bs * 0.5f),
+                strokeWidth = bs * 0.14f
+            )
+            // Os droit
+            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx + bs * 1.0f, by))
+            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx + bs * 1.0f, by - bs * 0.5f))
+            drawLine(
+                Color(0xFFF0E0C0).copy(alpha = alpha),
+                Offset(cx + bs * 1.0f, by),
+                Offset(cx + bs * 1.0f, by - bs * 0.5f),
+                strokeWidth = bs * 0.14f
+            )
+        }
+
         // étincelles quand l'animal est rassasié
         if (happy) {
             for (i in 0 until 4) {
@@ -206,23 +276,23 @@ fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
 @Preview(name = "Gloubi — rassasié (>= 99 %)", showBackground = true)
 @Composable
 fun PreviewAnimalHappy() {
-    AnimalView(satiety = 100f, feedTick = 0)
+    AnimalView(satiety = 100f, feedTick = 0, bigFeedTick = 0)
 }
 
 @Preview(name = "Gloubi — normal (50 %)", showBackground = true)
 @Composable
 fun PreviewAnimalNormal() {
-    AnimalView(satiety = 50f, feedTick = 0)
+    AnimalView(satiety = 50f, feedTick = 0, bigFeedTick = 0)
 }
 
 @Preview(name = "Gloubi — affamé (< 20 %)", showBackground = true)
 @Composable
 fun PreviewAnimalSad() {
-    AnimalView(satiety = 10f, feedTick = 0)
+    AnimalView(satiety = 10f, feedTick = 0, bigFeedTick = 0)
 }
 
 @Preview(name = "Gloubi — vide (0 %)", showBackground = true)
 @Composable
 fun PreviewAnimalEmpty() {
-    AnimalView(satiety = 0f, feedTick = 0)
+    AnimalView(satiety = 0f, feedTick = 0, bigFeedTick = 0)
 }

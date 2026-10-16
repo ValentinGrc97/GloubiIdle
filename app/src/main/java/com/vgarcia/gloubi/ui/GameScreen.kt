@@ -78,6 +78,7 @@ fun GameScreen(
     feedTick: Int,
     onFeed: () -> Unit,
     onWatchBoostAd: () -> Unit,
+    bigFeedTick: Int,
     onFeedBig: () -> Unit,
     onToggleAutoFeed: () -> Unit,
     onDismissOffline: () -> Unit
@@ -116,7 +117,7 @@ fun GameScreen(
                 }
             }
 
-            AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick)
+            AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick, bigFeedTick = bigFeedTick)
 
             // Barre de faim
             Card(Modifier.fillMaxWidth()) {
@@ -254,7 +255,7 @@ private fun PreviewGameScreenNormal() {
             adReady = true,
             offlineGain = 0.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
@@ -275,7 +276,7 @@ private fun PreviewGameScreenBoosted() {
             adReady = true,
             offlineGain = 0.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
@@ -296,7 +297,7 @@ private fun PreviewGameScreenAutoFeed() {
             adReady = true,
             offlineGain = 0.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
@@ -312,7 +313,7 @@ private fun PreviewGameScreenAdNotReady() {
             adReady = false,
             offlineGain = 0.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
@@ -328,7 +329,7 @@ private fun PreviewGameScreenOffline() {
             adReady = true,
             offlineGain = 42.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
@@ -344,7 +345,7 @@ private fun PreviewGameScreenAdsExhausted() {
             adReady = true,
             offlineGain = 0.0,
             feedTick = 0,
-            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onFeed = {}, onWatchBoostAd = {}, bigFeedTick = 0, onFeedBig = {},
             onToggleAutoFeed = {}, onDismissOffline = {}
         )
     }
