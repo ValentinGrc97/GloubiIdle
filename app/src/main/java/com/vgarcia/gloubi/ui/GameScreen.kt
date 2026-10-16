@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
 import java.util.Locale
+import androidx.compose.ui.tooling.preview.Preview
 
 private fun fmt(v: Double): String = when {
     v >= 1_000_000 -> String.format(Locale.FRANCE, "%.2f M", v / 1_000_000)
@@ -91,8 +92,8 @@ fun GameScreen(
     val autoCapLabel = "%dh%02d".format(autoCapSec / 3600, (autoCapSec % 3600) / 60)
     val earning = player.satiety >= GameConfig.GAIN_THRESHOLD
     val adsLeft = GameConfig.MAX_ADS_PER_DAY - player.adsToday
-    val level = player.progress.toInt() / 100 + 1
-    val xpInLevel = player.progress % 100
+    val level = GameConfig.levelFromProgress(player.progress)
+    val (xpInLevel, xpForLevel) = GameConfig.xpInCurrentLevel(player.progress)
 
     Column(modifier = Modifier.fillMaxSize()) {
         Column(
@@ -207,17 +208,144 @@ fun GameScreen(
             Card(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(
-                        "Gloubi Niveau $level ·\n Prochain niveau dans ${fmt(100.0 - xpInLevel)} XP",
+                        "Gloubi Niveau $level",
                         style = MaterialTheme.typography.titleMedium
                     )
                     LinearProgressIndicator(
-                        progress = { (xpInLevel / 100.0).toFloat().coerceIn(0f, 1f) },
+                        progress = { (xpInLevel / xpForLevel).toFloat().coerceIn(0f, 1f) },
                         modifier = Modifier.fillMaxWidth()
+                    )
+                    Text(
+                        "${fmt(xpInLevel)} / ${fmt(xpForLevel)} XP",
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
         }
 
         BannerAdView()
+    }
+}
+
+// ─── Previews ───────────────────────────────────────────────────────────────
+
+private fun previewPlayer(
+    satiety: Double = 50.0,
+    progress: Double = 0.0,
+    boostUntil: Long = 0L,
+    autoFeedUntil: Long = 0L,
+    adsToday: Int = 0
+) = Player(
+    satiety = satiety,
+    progress = progress,
+    lastSeen = System.currentTimeMillis(),
+    boostUntil = boostUntil,
+    autoFeedUntil = autoFeedUntil,
+    adsToday = adsToday
+)
+
+@Preview(name = "GameScreen — normal", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenNormal() {
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(satiety = 50.0, progress = 250.0),
+            nowMs = System.currentTimeMillis(),
+            adReady = true,
+            offlineGain = 0.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
+    }
+}
+
+@Preview(name = "GameScreen — rassasié + boost actif", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenBoosted() {
+    val now = System.currentTimeMillis()
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(
+                satiety = 99.5,
+                progress = 750.0,
+                boostUntil = now + 3 * 60 * 1000L
+            ),
+            nowMs = now,
+            adReady = true,
+            offlineGain = 0.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
+    }
+}
+
+@Preview(name = "GameScreen — auto-nourrissage actif", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenAutoFeed() {
+    val now = System.currentTimeMillis()
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(
+                satiety = 80.0,
+                progress = 1500.0,
+                autoFeedUntil = now + 45 * 60 * 1000L
+            ),
+            nowMs = now,
+            adReady = true,
+            offlineGain = 0.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
+    }
+}
+
+@Preview(name = "GameScreen — pub non chargée", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenAdNotReady() {
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(satiety = 30.0, progress = 100.0),
+            nowMs = System.currentTimeMillis(),
+            adReady = false,
+            offlineGain = 0.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
+    }
+}
+
+@Preview(name = "GameScreen — gains hors-ligne", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenOffline() {
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(satiety = 60.0, progress = 3100.0),
+            nowMs = System.currentTimeMillis(),
+            adReady = true,
+            offlineGain = 42.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
+    }
+}
+
+@Preview(name = "GameScreen — limite pubs atteinte", showBackground = true, showSystemUi = true)
+@Composable
+private fun PreviewGameScreenAdsExhausted() {
+    MaterialTheme {
+        GameScreen(
+            player = previewPlayer(satiety = 70.0, progress = 500.0, adsToday = 10),
+            nowMs = System.currentTimeMillis(),
+            adReady = true,
+            offlineGain = 0.0,
+            feedTick = 0,
+            onFeed = {}, onWatchBoostAd = {}, onFeedBig = {},
+            onToggleAutoFeed = {}, onDismissOffline = {}
+        )
     }
 }

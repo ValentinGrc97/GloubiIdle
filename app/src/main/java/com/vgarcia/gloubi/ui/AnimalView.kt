@@ -13,7 +13,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -21,6 +20,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import kotlin.math.PI
@@ -40,35 +41,53 @@ fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
     val happy = satiety >= 99f
     val sad = satiety < 20f
 
-    val infinite = rememberInfiniteTransition(label = "animal")
-    val breathe by infinite.animateFloat(
-        initialValue = 0.97f, targetValue = 1.03f,
-        animationSpec = infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "breathe"
-    )
-    val hop by infinite.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(520, easing = LinearEasing), RepeatMode.Restart),
-        label = "hop"
-    )
-    val sparkle by infinite.animateFloat(
-        initialValue = 0f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Restart),
-        label = "sparkle"
-    )
-    val blink by infinite.animateFloat(
-        initialValue = 1f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            keyframes {
-                durationMillis = 4000
-                1f at 0
-                1f at 3700
-                0.05f at 3800
-                1f at 3900
-            }
-        ),
-        label = "blink"
-    )
+    val isPreview = LocalInspectionMode.current
+
+    val breathe: Float
+    val hop: Float
+    val sparkle: Float
+    val blink: Float
+
+    if (isPreview) {
+        breathe = 1f
+        hop = 0f
+        sparkle = 0f
+        blink = 1f
+    } else {
+        val infinite = rememberInfiniteTransition(label = "animal")
+        val breatheState = infinite.animateFloat(
+            initialValue = 0.97f, targetValue = 1.03f,
+            animationSpec = infiniteRepeatable(tween(1300, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "breathe"
+        )
+        val hopState = infinite.animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(520, easing = LinearEasing), RepeatMode.Restart),
+            label = "hop"
+        )
+        val sparkleState = infinite.animateFloat(
+            initialValue = 0f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing), RepeatMode.Restart),
+            label = "sparkle"
+        )
+        val blinkState = infinite.animateFloat(
+            initialValue = 1f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(
+                keyframes {
+                    durationMillis = 4000
+                    1f at 0
+                    1f at 3700
+                    0.05f at 3800
+                    1f at 3900
+                }
+            ),
+            label = "blink"
+        )
+        breathe = breatheState.value
+        hop = hopState.value
+        sparkle = sparkleState.value
+        blink = blinkState.value
+    }
 
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
     val food = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
@@ -180,4 +199,30 @@ fun AnimalView(satiety: Float, feedTick: Int, modifier: Modifier = Modifier) {
             }
         }
     }
+}
+
+// ─── Previews ───────────────────────────────────────────────────────────────
+
+@Preview(name = "Gloubi — rassasié (>= 99 %)", showBackground = true)
+@Composable
+fun PreviewAnimalHappy() {
+    AnimalView(satiety = 100f, feedTick = 0)
+}
+
+@Preview(name = "Gloubi — normal (50 %)", showBackground = true)
+@Composable
+fun PreviewAnimalNormal() {
+    AnimalView(satiety = 50f, feedTick = 0)
+}
+
+@Preview(name = "Gloubi — affamé (< 20 %)", showBackground = true)
+@Composable
+fun PreviewAnimalSad() {
+    AnimalView(satiety = 10f, feedTick = 0)
+}
+
+@Preview(name = "Gloubi — vide (0 %)", showBackground = true)
+@Composable
+fun PreviewAnimalEmpty() {
+    AnimalView(satiety = 0f, feedTick = 0)
 }

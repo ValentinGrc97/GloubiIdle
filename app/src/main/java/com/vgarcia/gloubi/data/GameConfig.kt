@@ -1,5 +1,7 @@
 package com.vgarcia.gloubi.data
 
+import kotlin.math.pow
+
 object GameConfig {
     // --- Animal ---
     const val FEED_SMALL = 0.01                      // bouton 1 : +0,01 % de faim
@@ -17,4 +19,30 @@ object GameConfig {
     const val MAX_OFFLINE_MS = 8 * 60 * 60 * 1000L   // gains hors-ligne plafonnés à 8 h
     const val BOOST_MS = 5 * 60 * 1000L              // durée du boost obtenu par pub (5 minutes)
     const val MAX_ADS_PER_DAY = 10                   // plafond quotidien (anti-abus)
+
+    // --- Niveaux (XP exponentielle) ---
+    const val XP_BASE = 100.0          // XP pour passer du niveau 0 au niveau 1
+    const val XP_MULTIPLIER = 1.5      // chaque niveau coûte XP_MULTIPLIER fois plus que le précédent
+
+    /** XP totale cumulée nécessaire pour atteindre [level]. */
+    fun xpRequiredForLevel(level: Int): Double {
+        if (level <= 0) return 0.0
+        // Somme géométrique : XP_BASE * (2^level - 1)
+        return XP_BASE * (XP_MULTIPLIER.pow(level) - 1.0) / (XP_MULTIPLIER - 1.0)
+    }
+
+    /** Niveau actuel à partir de la progression cumulée. */
+    fun levelFromProgress(progress: Double): Int {
+        var level = 0
+        while (progress >= xpRequiredForLevel(level + 1)) level++
+        return level
+    }
+
+    /** XP dans le niveau courant et XP totale nécessaire pour ce niveau. */
+    fun xpInCurrentLevel(progress: Double): Pair<Double, Double> {
+        val level = levelFromProgress(progress)
+        val xpStart = xpRequiredForLevel(level)
+        val xpEnd = xpRequiredForLevel(level + 1)
+        return Pair(progress - xpStart, xpEnd - xpStart)
+    }
 }

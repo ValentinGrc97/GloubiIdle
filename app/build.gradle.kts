@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
@@ -36,6 +35,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     implementation("androidx.work:work-runtime-ktx:2.12.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.12.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.12.1")
 
     val room = "2.8.5"
     implementation("androidx.room:room-runtime:$room")

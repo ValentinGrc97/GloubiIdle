@@ -1,5 +1,7 @@
 package com.vgarcia.gloubi
 
+import android.app.NotificationManager
+import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -21,10 +23,12 @@ import com.vgarcia.gloubi.ui.GameScreen
 import com.google.android.gms.ads.MobileAds
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
+import com.vgarcia.gloubi.notifications.HungerNotificationWorker
 import com.vgarcia.gloubi.notifications.HungerScheduler
 import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
+import androidx.core.content.edit
 
 class MainActivity : ComponentActivity() {
 
@@ -94,6 +98,20 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // L'utilisateur a ouvert l'appli : les notifications sont "vues"
+        getSharedPreferences(HungerNotificationWorker.PREFS_NAME, Context.MODE_PRIVATE)
+            .edit {
+                putBoolean(HungerNotificationWorker.KEY_THRESHOLD_PENDING, false)
+                    .putBoolean(HungerNotificationWorker.KEY_EMPTY_PENDING, false)
+            }
+        // Annuler les notifications visuelles encore visibles dans le tiroir
+        val nm = getSystemService(NotificationManager::class.java)
+        nm.cancel(HungerNotificationWorker.NOTIF_ID_THRESHOLD)
+        nm.cancel(HungerNotificationWorker.NOTIF_ID_EMPTY)
     }
 
     /** Consentement RGPD (UMP) avant toute demande de pub. */

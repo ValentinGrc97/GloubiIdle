@@ -12,6 +12,7 @@ import androidx.work.WorkerParameters
 import com.vgarcia.gloubi.MainActivity
 import com.vgarcia.gloubi.data.AppDb
 import com.vgarcia.gloubi.data.GameConfig
+import androidx.core.content.edit
 
 class HungerNotificationWorker(
     private val ctx: Context,
@@ -22,6 +23,9 @@ class HungerNotificationWorker(
         const val CHANNEL_ID = "gloubi_hunger"
         const val NOTIF_ID_THRESHOLD = 1
         const val NOTIF_ID_EMPTY = 2
+        const val PREFS_NAME = "notif_prefs"
+        const val KEY_THRESHOLD_PENDING = "threshold_pending"
+        const val KEY_EMPTY_PENDING = "empty_pending"
     }
 
     override suspend fun doWork(): Result {
@@ -39,21 +43,23 @@ class HungerNotificationWorker(
         createChannel(ctx)
 
         when {
-            currentSatiety <= 0.0 -> notify(
-                ctx,
-                NOTIF_ID_EMPTY,
+            currentSatiety <= 0.0 -> notifyIfNotPending(ctx, NOTIF_ID_EMPTY, KEY_EMPTY_PENDING,
                 "Gloubi a faim ! 😢",
-                "Sa jauge est vide, revenez vite le nourrir !"
-            )
-            currentSatiety <= GameConfig.GAIN_THRESHOLD -> notify(
-                ctx,
-                NOTIF_ID_THRESHOLD,
+                "Sa jauge est vide, revenez vite le nourrir !")
+            currentSatiety <= GameConfig.GAIN_THRESHOLD -> notifyIfNotPending(ctx, NOTIF_ID_THRESHOLD, KEY_THRESHOLD_PENDING,
                 "Gloubi commence à avoir faim 🍖",
                 "Sa jauge est sous ${GameConfig.GAIN_THRESHOLD.toInt()} %, il ne gagne plus d'XP."
             )
         }
 
         return Result.success()
+    }
+
+    private fun notifyIfNotPending(ctx: Context, id: Int, key: String, title: String, text: String) {
+        val prefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        if (prefs.getBoolean(key, false)) return  // déjà envoyée, pas ouverte
+        notify(ctx, id, title, text)
+        prefs.edit { putBoolean(key, true) }
     }
 
     private fun createChannel(ctx: Context) {
