@@ -94,42 +94,45 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
     val food = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
 
+    //Animation nourriture
     LaunchedEffect(feedTick) {
         if (feedTick > 0) {
             food.snapTo(0f)
-            launch { food.animateTo(1f, tween(260, easing = LinearEasing)) }
-            mouth.animateTo(1f, tween(110))
-            mouth.animateTo(0f, tween(200))
+            launch { food.animateTo(1f, tween(300, easing = LinearEasing)) }
+            mouth.animateTo(1f, tween(300))
+            mouth.animateTo(0f, tween(500))
         }
     }
 
     // Animation grosse ration
     val bigFoodScale = remember { Animatable(0f) }
     val bigFoodAlpha = remember { Animatable(0f) }
-    val bigFoodY    = remember { Animatable(0f) }
+    val bigFoodY    = remember { Animatable(0f) }  // 0 = haut de l'écran, 1 = bouche
 
     LaunchedEffect(bigFeedTick) {
         if (bigFeedTick > 0) {
-            // Reset
+            // Reset : steak en haut, plein opaque, taille 0
             bigFoodScale.snapTo(0f)
             bigFoodAlpha.snapTo(1f)
             bigFoodY.snapTo(0f)
-            // Apparition + montée vers la bouche + disparition
+
+            // Phase 1 : apparition du steak (grossit)
             launch {
                 bigFoodScale.animateTo(1f, tween(200, easing = FastOutSlowInEasing))
-                bigFoodScale.animateTo(1.3f, tween(150))
-                bigFoodScale.animateTo(0f, tween(200))
             }
+            // Phase 2 : descente lente jusqu'à la bouche (bigFoodY atteint 1f = bouche)
             launch {
-                bigFoodY.animateTo(1f, tween(550, easing = LinearEasing))
+                bigFoodY.animateTo(1f, tween(600, easing = LinearEasing))
             }
+            // Phase 3 : disparition en fondu quand le steak touche la bouche
             launch {
-                delay(350.milliseconds)
-                bigFoodAlpha.animateTo(0f, tween(200))
+                delay(900.milliseconds)         // attend que le steak soit presque arrivé
+                bigFoodAlpha.animateTo(0f, tween(300))
             }
-            // Ouvrir la bouche plus grand
-            mouth.animateTo(1f, tween(130))
-            mouth.animateTo(0f, tween(250))
+            // Phase 4 : Gloubi ouvre grand la bouche à l'arrivée du steak
+            delay(500.milliseconds)
+            mouth.animateTo(1f, tween(300))
+            mouth.animateTo(0f, tween(300))
         }
     }
 
@@ -215,14 +218,17 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
 
         // croquette qui tombe vers la bouche
         if (food.value < 1f) {
-            val fy = h * 0.02f + (my - h * 0.02f) * food.value
+            val fy = h * 0.02f + (my + r * 0.1f - h * 0.02f) * food.value
             drawCircle(Color(0xFFD08A4E), r * 0.10f, Offset(cx, fy))
             drawCircle(Color(0xFF9C5F2C), r * 0.04f, Offset(cx + r * 0.03f, fy - r * 0.02f))
         }
 
         // Grosse ration (steak / os)
+        // byStart : juste au-dessus du canvas ; byEnd : centre de la bouche (my)
         if (bigFeedTick > 0 && bigFoodScale.value > 0f) {
-            val by = h * 0.02f + (my - h * 0.02f) * bigFoodY.value
+            val byStart = -r * 0.5f          // légèrement hors canvas en haut
+            val byEnd   = my + r * 0.1f      // centre de la bouche ouverte
+            val by = byStart + (byEnd - byStart) * bigFoodY.value
             val bs = r * 0.28f * bigFoodScale.value
             val alpha = bigFoodAlpha.value
 
