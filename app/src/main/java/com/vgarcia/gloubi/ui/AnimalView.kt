@@ -218,49 +218,40 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
 
         // croquette qui tombe vers la bouche
         if (food.value < 1f) {
-            val fy = h * 0.02f + (my + r * 0.1f - h * 0.02f) * food.value
+            val byStart = h * 0.02f          // légèrement hors canvas en haut
+            val byEnd   = my + r * 0.1f      // centre de la bouche ouverte
+            val fy = byStart + (byEnd - byStart) * food.value
             drawCircle(Color(0xFFD08A4E), r * 0.10f, Offset(cx, fy))
             drawCircle(Color(0xFF9C5F2C), r * 0.04f, Offset(cx + r * 0.03f, fy - r * 0.02f))
         }
 
-        // Grosse ration (steak / os)
+        // Grosse ration (pomme)
         // byStart : juste au-dessus du canvas ; byEnd : centre de la bouche (my)
         if (bigFeedTick > 0 && bigFoodScale.value > 0f) {
             val byStart = -r * 0.5f          // légèrement hors canvas en haut
             val byEnd   = my + r * 0.1f      // centre de la bouche ouverte
             val by = byStart + (byEnd - byStart) * bigFoodY.value
-            val bs = r * 0.28f * bigFoodScale.value
+            val bs = r * 0.2f * bigFoodScale.value //dimension de la grosse ration
             val alpha = bigFoodAlpha.value
 
-            // Corps du steak
-            drawOval(
-                Color(0xFFB5541A).copy(alpha = alpha),
-                Offset(cx - bs * 0.9f, by - bs * 0.5f),
-                Size(bs * 1.8f, bs)
-            )
-            // Gras
-            drawOval(
-                Color(0xFFE8C97A).copy(alpha = alpha),
-                Offset(cx - bs * 0.6f, by - bs * 0.3f),
-                Size(bs * 1.2f, bs * 0.5f)
-            )
-            // Os gauche
-            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx - bs * 1.0f, by))
-            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx - bs * 1.0f, by - bs * 0.5f))
+            // Corps gauche de la pomme (lobe gauche légèrement décalé)
+            drawCircle(Color(0xFFE63A2E).copy(alpha = alpha), bs * 0.75f, Offset(cx - bs * 0.18f, by))
+            // Corps droit de la pomme (lobe droit)
+            drawCircle(Color(0xFFE63A2E).copy(alpha = alpha), bs * 0.75f, Offset(cx + bs * 0.18f, by))
+            // Reflet brillant
+            drawCircle(Color(0xFFFF7B6B).copy(alpha = alpha * 0.7f), bs * 0.28f, Offset(cx - bs * 0.22f, by - bs * 0.38f))
+            // Tige
             drawLine(
-                Color(0xFFF0E0C0).copy(alpha = alpha),
-                Offset(cx - bs * 1.0f, by),
-                Offset(cx - bs * 1.0f, by - bs * 0.5f),
-                strokeWidth = bs * 0.14f
+                Color(0xFF5C3A1E).copy(alpha = alpha),
+                Offset(cx + bs * 0.08f, by - bs * 0.75f),
+                Offset(cx + bs * 0.08f, by - bs * 1.10f),
+                strokeWidth = bs * 0.12f
             )
-            // Os droit
-            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx + bs * 1.0f, by))
-            drawCircle(Color(0xFFF0E0C0).copy(alpha = alpha), bs * 0.22f, Offset(cx + bs * 1.0f, by - bs * 0.5f))
-            drawLine(
-                Color(0xFFF0E0C0).copy(alpha = alpha),
-                Offset(cx + bs * 1.0f, by),
-                Offset(cx + bs * 1.0f, by - bs * 0.5f),
-                strokeWidth = bs * 0.14f
+            // Feuille (triangle arrondi via arc)
+            drawOval(
+                Color(0xFF4CAF50).copy(alpha = alpha),
+                Offset(cx + bs * 0.08f, by - bs * 1.10f),
+                Size(bs * 0.45f, bs * 0.28f)
             )
         }
 

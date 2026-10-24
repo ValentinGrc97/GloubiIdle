@@ -58,7 +58,7 @@ private fun ActionButton(
         onClick = onClick,
         enabled = enabled,
         colors = colors,
-        modifier = modifier.height(80.dp)
+        modifier = modifier.height(90.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             icon()
