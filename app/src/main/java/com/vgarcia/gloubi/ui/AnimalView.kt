@@ -39,7 +39,7 @@ import kotlin.time.Duration.Companion.milliseconds
  * - ouvre la bouche et attrape une croquette à chaque repas
  */
 @Composable
-fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifier = Modifier) {
+fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean = false, level: Int, modifier: Modifier = Modifier) {
     val happy = satiety >= 99f
     val sad = satiety < 20f
 
@@ -94,12 +94,25 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
     val food = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
 
-    //Animation nourriture
+    // Éclats boost
+    val burstProgress = remember { Animatable(0f) }
+    val burstAlpha    = remember { Animatable(0f) }
+
+    //Animation nourriture + éclats boost
     LaunchedEffect(feedTick) {
         if (feedTick > 0) {
             food.snapTo(0f)
             launch { food.animateTo(1f, tween(300, easing = LinearEasing)) }
             mouth.animateTo(1f, tween(300))
+            if (boosted) {
+                burstProgress.snapTo(0f)
+                burstAlpha.snapTo(1f)
+                launch { burstProgress.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
+                launch {
+                    delay(250.milliseconds)
+                    burstAlpha.animateTo(0f, tween(300))
+                }
+            }
             mouth.animateTo(0f, tween(500))
         }
     }
@@ -139,9 +152,10 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
     Canvas(modifier.size(240.dp)) {
         val w = size.width
         val h = size.height
+        val variableByLevel = (0.05f + 0.10f*level)/2 //augmentation dimensions par niveau
         val cx = w / 2f
-        val r = w * 0.30f * breathe
-        val ground = h * 0.58f + w * 0.30f
+        val r = w * variableByLevel * breathe //taille
+        val ground = h * 0.58f + w * variableByLevel
         val bounce = if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
         val cy = h * 0.58f - bounce
         val dark = Color(0xFF2B2B3A)
@@ -255,6 +269,43 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
             )
         }
 
+        // Éclats boost (8 rayons qui partent du centre de Gloubi)
+        if (burstProgress.value > 0f && burstAlpha.value > 0f) {
+            val numRays = 8
+            val maxLen  = r * 1.6f
+            val minLen  = r * 0.7f
+            val rayLen  = minLen + (maxLen - minLen) * burstProgress.value
+            val tipR    = r * 0.07f * (1f - burstProgress.value * 0.5f)
+            val alpha   = burstAlpha.value
+            for (i in 0 until numRays) {
+                val angle = (i.toFloat() / numRays) * 2f * PI.toFloat()
+                val startX = cx + cos(angle) * r * 0.5f
+                val startY = cy + sin(angle) * r * 0.5f
+                val endX   = cx + cos(angle) * (r * 0.5f + rayLen)
+                val endY   = cy + sin(angle) * (r * 0.5f + rayLen)
+                // rayon
+                drawLine(
+                    color = Color(0xFFFFD54F).copy(alpha = alpha),
+                    start = Offset(startX, startY),
+                    end   = Offset(endX, endY),
+                    strokeWidth = r * 0.07f * (1f - burstProgress.value * 0.4f),
+                    cap = StrokeCap.Round
+                )
+                // étoile au bout du rayon
+                drawCircle(
+                    color = Color(0xFFFFFFFF).copy(alpha = alpha * 0.85f),
+                    radius = tipR,
+                    center = Offset(endX, endY)
+                )
+            }
+            // Halo central
+            drawCircle(
+                color = Color(0xFFFFD54F).copy(alpha = alpha * 0.25f),
+                radius = r * 0.6f * burstProgress.value,
+                center = Offset(cx, cy)
+            )
+        }
+
         // étincelles quand l'animal est rassasié
         if (happy) {
             for (i in 0 until 4) {
@@ -273,23 +324,29 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, modifier: Modifi
 @Preview(name = "Gloubi — rassasié (>= 99 %)", showBackground = true)
 @Composable
 fun PreviewAnimalHappy() {
-    AnimalView(satiety = 100f, feedTick = 0, bigFeedTick = 0)
+    AnimalView(satiety = 100f, feedTick = 0, bigFeedTick = 0, boosted = false, level = 1)
 }
 
 @Preview(name = "Gloubi — normal (50 %)", showBackground = true)
 @Composable
 fun PreviewAnimalNormal() {
-    AnimalView(satiety = 50f, feedTick = 0, bigFeedTick = 0)
+    AnimalView(satiety = 50f, feedTick = 0, bigFeedTick = 0, boosted = false, level = 1)
 }
 
 @Preview(name = "Gloubi — affamé (< 20 %)", showBackground = true)
 @Composable
 fun PreviewAnimalSad() {
-    AnimalView(satiety = 10f, feedTick = 0, bigFeedTick = 0)
+    AnimalView(satiety = 10f, feedTick = 0, bigFeedTick = 0, boosted = false, level = 1)
 }
 
 @Preview(name = "Gloubi — vide (0 %)", showBackground = true)
 @Composable
 fun PreviewAnimalEmpty() {
-    AnimalView(satiety = 0f, feedTick = 0, bigFeedTick = 0)
+    AnimalView(satiety = 0f, feedTick = 0, bigFeedTick = 0, boosted = false, level = 1)
+}
+
+@Preview(name = "Gloubi — boost actif", showBackground = true)
+@Composable
+fun PreviewAnimalBoosted() {
+    AnimalView(satiety = 60f, feedTick = 0, bigFeedTick = 0, boosted = true, level = 1)
 }

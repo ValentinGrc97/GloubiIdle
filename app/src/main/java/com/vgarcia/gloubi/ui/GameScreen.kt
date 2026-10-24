@@ -117,7 +117,7 @@ fun GameScreen(
                 }
             }
 
-            AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick, bigFeedTick = bigFeedTick)
+            AnimalView(satiety = player.satiety.toFloat(), feedTick = feedTick, bigFeedTick = bigFeedTick, boosted = boosted, level = level)
 
             // Barre de faim
             Card(Modifier.fillMaxWidth()) {
