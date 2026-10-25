@@ -206,43 +206,46 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean
 
         // bouche
         val mx = cx
-        val my = cy + r * 0.28f      // position Y de base
-        val mouthCy = my + r * 0.10f // centre vertical unifié
+        val mouthCy = cy + r * 0.40f  // centre visuel commun
 
         when {
-            // Bouche ouverte : ovale centré sur mouthCy
+            // Bouche ouverte : ovale dont le centre est exactement mouthCy
             mouth.value > 0.05f -> {
-                val ovalH = r * 0.50f * mouth.value
+                val ovalW = r * 0.40f
+                val ovalH = r * 0.44f * mouth.value
                 drawOval(
                     Color(0xFF7A1F3D),
-                    Offset(mx - r * 0.20f, mouthCy - ovalH / 2f),
-                    Size(r * 0.40f, ovalH)
+                    Offset(mx - ovalW / 2f, mouthCy - ovalH / 2f + r * 0.05f),
+                    Size(ovalW, ovalH)
                 )
             }
-            // Bouche triste : arc centré sur mouthCy
-            sad -> drawArc(
-                dark, 200f, 140f, false,
-                Offset(mx - r * 0.18f, mouthCy - r * 0.15f), Size(r * 0.36f, r * 0.30f),
-                style = Stroke(stroke, cap = StrokeCap.Round)
-            )
-            // Bouche heureuse : arc centré sur mouthCy
-            happy -> drawArc(
-                dark, 20f, 140f, false,
-                Offset(mx - r * 0.25f, mouthCy - r * 0.20f), Size(r * 0.50f, r * 0.40f),
-                style = Stroke(stroke, cap = StrokeCap.Round)
-            )
-            // Bouche neutre : arc centré sur mouthCy
-            else -> drawArc(
-                dark, 30f, 120f, false,
-                Offset(mx - r * 0.15f, mouthCy - r * 0.10f), Size(r * 0.30f, r * 0.20f),
-                style = Stroke(stroke, cap = StrokeCap.Round)
-            )
+            // Bouche triste : arc ouvert vers le haut (200°→340°)
+            sad -> {
+                val arcW = r * 0.36f; val arcH = r * 0.28f
+                drawArc(dark, 200f, 140f, false,
+                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                    style = Stroke(stroke, cap = StrokeCap.Round))
+            }
+            // Bouche heureuse : arc ouvert vers le bas (20°→160°)
+            happy -> {
+                val arcW = r * 0.48f; val arcH = r * 0.38f
+                drawArc(dark, 20f, 140f, false,
+                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                    style = Stroke(stroke, cap = StrokeCap.Round))
+            }
+            // Bouche neutre : petit arc
+            else -> {
+                val arcW = r * 0.30f; val arcH = r * 0.18f
+                drawArc(dark, 25f, 130f, false,
+                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                    style = Stroke(stroke, cap = StrokeCap.Round))
+            }
         }
 
         // croquette qui tombe vers la bouche
         if (food.value < 1f) {
             val byStart = h * 0.02f          // légèrement hors canvas en haut
-            val byEnd   = my + r * 0.1f      // centre de la bouche ouverte
+            val byEnd   = cy + r * 0.40f    // mouthCy : centre visuel de la bouche
             val fy = byStart + (byEnd - byStart) * food.value
             drawCircle(Color(0xFFD08A4E), r * 0.10f, Offset(cx, fy))
             drawCircle(Color(0xFF9C5F2C), r * 0.04f, Offset(cx + r * 0.03f, fy - r * 0.02f))
@@ -252,7 +255,7 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean
         // byStart : juste au-dessus du canvas ; byEnd : centre de la bouche (my)
         if (bigFeedTick > 0 && bigFoodScale.value > 0f) {
             val byStart = -r * 0.5f          // légèrement hors canvas en haut
-            val byEnd   = my + r * 0.1f      // centre de la bouche ouverte
+            val byEnd   = cy + r * 0.40f    // mouthCy : centre visuel de la bouche
             val by = byStart + (byEnd - byStart) * bigFoodY.value
             val bs = r * 0.2f * bigFoodScale.value //dimension de la grosse ration
             val alpha = bigFoodAlpha.value
