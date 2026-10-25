@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.vgarcia.gloubi.data.AppDb
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -90,7 +91,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun save() {
-        viewModelScope.launch { dao.save(_player.value) }
+        viewModelScope.launch(Dispatchers.IO) { dao.save(_player.value) }
     }
 
     private fun feed(amount: Double) {

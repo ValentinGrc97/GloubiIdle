@@ -206,26 +206,35 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean
 
         // bouche
         val mx = cx
-        val my = cy + r * 0.28f
+        val my = cy + r * 0.28f      // position Y de base
+        val mouthCy = my + r * 0.10f // centre vertical unifié
+
         when {
-            mouth.value > 0.05f -> drawOval(
-                Color(0xFF7A1F3D),
-                Offset(mx - r * 0.20f, my - r * 0.05f),
-                Size(r * 0.40f, r * 0.50f * mouth.value)
-            )
+            // Bouche ouverte : ovale centré sur mouthCy
+            mouth.value > 0.05f -> {
+                val ovalH = r * 0.50f * mouth.value
+                drawOval(
+                    Color(0xFF7A1F3D),
+                    Offset(mx - r * 0.20f, mouthCy - ovalH / 2f),
+                    Size(r * 0.40f, ovalH)
+                )
+            }
+            // Bouche triste : arc centré sur mouthCy
             sad -> drawArc(
                 dark, 200f, 140f, false,
-                Offset(mx - r * 0.18f, my + r * 0.05f), Size(r * 0.36f, r * 0.30f),
+                Offset(mx - r * 0.18f, mouthCy - r * 0.15f), Size(r * 0.36f, r * 0.30f),
                 style = Stroke(stroke, cap = StrokeCap.Round)
             )
+            // Bouche heureuse : arc centré sur mouthCy
             happy -> drawArc(
                 dark, 20f, 140f, false,
-                Offset(mx - r * 0.25f, my - r * 0.15f), Size(r * 0.50f, r * 0.40f),
+                Offset(mx - r * 0.25f, mouthCy - r * 0.20f), Size(r * 0.50f, r * 0.40f),
                 style = Stroke(stroke, cap = StrokeCap.Round)
             )
+            // Bouche neutre : arc centré sur mouthCy
             else -> drawArc(
                 dark, 30f, 120f, false,
-                Offset(mx - r * 0.15f, my - r * 0.05f), Size(r * 0.30f, r * 0.20f),
+                Offset(mx - r * 0.15f, mouthCy - r * 0.10f), Size(r * 0.30f, r * 0.20f),
                 style = Stroke(stroke, cap = StrokeCap.Round)
             )
         }

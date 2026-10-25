@@ -41,7 +41,7 @@ abstract class AppDb : RoomDatabase() {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext, AppDb::class.java, "idle.db"
                 )
-                    .fallbackToDestructiveMigration(false)
+                    .fallbackToDestructiveMigration(true)
                     .build().also { instance = it }
             }
     }

@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
@@ -45,15 +44,15 @@ fun GloubiProgressBar(
         else         -> Brush.horizontalGradient(listOf(GloubiRed, Color(0xFFFF8A65)))
     }
 
-    val scale by if (critical) {
-        rememberInfiniteTransition(label = "shake").animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "shake")
+    val scale = if (critical) {
+        infiniteTransition.animateFloat(
             initialValue = 1f, targetValue = 1.015f,
             animationSpec = infiniteRepeatable(tween(140, easing = FastOutSlowInEasing), RepeatMode.Reverse),
             label = "shakeScale"
-        )
+        ).value
     } else {
-        androidx.compose.runtime.remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
-            .let { v -> object : androidx.compose.runtime.State<Float> { override val value get() = v.floatValue } }
+        1f
     }
 
     Box(

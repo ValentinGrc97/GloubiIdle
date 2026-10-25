@@ -110,15 +110,15 @@ private fun ActionButton(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    val pulse by if (urgent && enabled) {
-        rememberInfiniteTransition(label = "pulse_$label").animateFloat(
+    val infiniteTransition = rememberInfiniteTransition(label = "pulse_$label")
+    val pulse = if (urgent && enabled) {
+        infiniteTransition.animateFloat(
             initialValue = 0.92f, targetValue = 1f,
             animationSpec = infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
             label = "pulseVal"
-        )
+        ).value
     } else {
-        androidx.compose.runtime.remember { androidx.compose.runtime.mutableFloatStateOf(1f) }
-            .let { v -> object : androidx.compose.runtime.State<Float> { override val value get() = v.floatValue } }
+        1f
     }
 
     val gradient = when {

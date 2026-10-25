@@ -13,7 +13,6 @@ import com.vgarcia.gloubi.MainActivity
 import com.vgarcia.gloubi.data.AppDb
 import com.vgarcia.gloubi.data.GameConfig
 import androidx.core.content.edit
-import com.vgarcia.gloubi.R
 
 class HungerNotificationWorker(
     private val ctx: Context,
@@ -84,7 +83,7 @@ class HungerNotificationWorker(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
         val notif = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
             .setContentTitle(title)
             .setContentText(text)
             .setContentIntent(pi)
