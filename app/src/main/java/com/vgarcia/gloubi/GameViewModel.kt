@@ -94,6 +94,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) { dao.save(_player.value) }
     }
 
+    fun saveOnPause() {
+        val p = _player.value
+        val now = System.currentTimeMillis()
+        val updated = p.copy(lastSeen = now)
+        _player.value = updated
+        viewModelScope.launch(Dispatchers.IO) { dao.save(updated) }
+    }
+
     private fun feed(amount: Double) {
         val p = _player.value
         _player.value = p.copy(satiety = min(100.0, p.satiety + amount))
@@ -145,6 +153,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun dismissOfflineGain() { _offlineGain.value = 0.0 }
+
+    fun resetProgress() {
+        val now = System.currentTimeMillis()
+        val fresh = Player(lastSeen = now)
+        _player.value = fresh
+        _offlineGain.value = 0.0
+        viewModelScope.launch(Dispatchers.IO) { dao.save(fresh) }
+    }
 
     fun consumePendingBigFeed() {
         if (_pendingBigFeed.value) {

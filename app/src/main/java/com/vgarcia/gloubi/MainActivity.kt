@@ -1,11 +1,9 @@
 package com.vgarcia.gloubi
 
 import android.app.NotificationManager
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
-import android.view.WindowInsets
-import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,7 +14,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
-import androidx.core.view.WindowCompat
+import androidx.compose.runtime.mutableStateOf
 import com.vgarcia.gloubi.ads.RewardedAdManager
 import com.vgarcia.gloubi.ui.GameScreen
 import com.google.android.gms.ads.MobileAds
@@ -28,6 +26,7 @@ import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.content.edit
+import com.vgarcia.gloubi.ui.SettingsScreen
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
 
 class MainActivity : ComponentActivity() {
@@ -41,43 +40,75 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         adManager = RewardedAdManager(applicationContext)
-
-        // Notifications
         HungerScheduler.schedule(this)
 
         setContent {
             GloubiTheme {
-                val player by vm.player.collectAsState()
-                val offline by vm.offlineGain.collectAsState()
-                val adReady by adManager.isReady.collectAsState()
-                val feedTick by vm.feedTick.collectAsState()
-                val bigFeedTick by vm.bigFeedTick.collectAsState()
-                var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                val player        by vm.player.collectAsState()
+                val offline       by vm.offlineGain.collectAsState()
+                val adReady       by adManager.isReady.collectAsState()
+                val feedTick      by vm.feedTick.collectAsState()
+                val bigFeedTick   by vm.bigFeedTick.collectAsState()
+                var now           by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                var showSettings  by remember { mutableStateOf(false) }
+
+                // Notifications activées = permission accordée
+                val notifEnabled = remember {
+                    mutableStateOf(
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+                            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
+                        else true
+                    )
+                }
+
                 LaunchedEffect(Unit) {
                     while (true) { now = System.currentTimeMillis(); delay(1000.milliseconds) }
                 }
 
-                GameScreen(
-                    player = player,
-                    nowMs = now,
-                    adReady = adReady,
-                    offlineGain = offline,
-                    feedTick = feedTick,
-                    bigFeedTick = bigFeedTick,
-                    onFeed = {
-                        if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
-                    },
-                    onWatchBoostAd = {
-                        if (vm.canWatchAd()) adManager.show(this) { vm.onBoostAdRewarded() }
-                    },
-                    onFeedBig = {
-                        adManager.show(this) { vm.onBigFeedAdRewarded() }
-                    },
-                    onToggleAutoFeed = {
-                        adManager.show(this) { vm.onAutoFeedRewarded() }
-                    },
-                    onDismissOffline = vm::dismissOfflineGain
-                )
+                if (showSettings) {
+                    SettingsScreen(
+                        notificationsEnabled = notifEnabled.value,
+                        onToggleNotifications = { enabled ->
+                            if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+                            }
+                            notifEnabled.value = enabled
+                            if (enabled) HungerScheduler.schedule(this)
+                            else HungerScheduler.cancel(this)
+                        },
+                        onOpenConsentForm = {
+                            UserMessagingPlatform.showPrivacyOptionsForm(this) { /* formulaire fermé */ }
+                        },
+                        onResetProgress = {
+                            vm.resetProgress()
+                            showSettings = false
+                        },
+                        onBack = { showSettings = false }
+                    )
+                } else {
+                    GameScreen(
+                        player = player,
+                        nowMs = now,
+                        adReady = adReady,
+                        offlineGain = offline,
+                        feedTick = feedTick,
+                        bigFeedTick = bigFeedTick,
+                        onFeed = {
+                            if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
+                        },
+                        onWatchBoostAd = {
+                            if (vm.canWatchAd()) adManager.show(this) { vm.onBoostAdRewarded() }
+                        },
+                        onFeedBig = {
+                            adManager.show(this) { vm.onBigFeedAdRewarded() }
+                        },
+                        onToggleAutoFeed = {
+                            adManager.show(this) { vm.onAutoFeedRewarded() }
+                        },
+                        onDismissOffline = vm::dismissOfflineGain,
+                        onSettings = { showSettings = true }
+                    )
+                }
             }
         }
     }
@@ -88,24 +119,20 @@ class MainActivity : ComponentActivity() {
             requestConsentThenInitAds()
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
             }
         }
         vm.consumePendingBigFeed()
-        // L'utilisateur a ouvert l'appli : les notifications sont "vues"
-        getSharedPreferences(HungerNotificationWorker.PREFS_NAME, MODE_PRIVATE)
-            .edit {
-                putBoolean(HungerNotificationWorker.KEY_THRESHOLD_PENDING, false)
-                    .putBoolean(HungerNotificationWorker.KEY_EMPTY_PENDING, false)
-            }
-        // Annuler les notifications visuelles encore visibles dans le tiroir
+        getSharedPreferences(HungerNotificationWorker.PREFS_NAME, MODE_PRIVATE).edit {
+            putBoolean(HungerNotificationWorker.KEY_THRESHOLD_PENDING, false)
+            putBoolean(HungerNotificationWorker.KEY_EMPTY_PENDING, false)
+        }
         val nm = getSystemService(NotificationManager::class.java)
         nm.cancel(HungerNotificationWorker.NOTIF_ID_THRESHOLD)
         nm.cancel(HungerNotificationWorker.NOTIF_ID_EMPTY)
     }
 
-    /** Consentement RGPD (UMP) avant toute demande de pub. */
     private fun requestConsentThenInitAds() {
         val info = UserMessagingPlatform.getConsentInformation(this)
         info.requestConsentInfoUpdate(
@@ -128,6 +155,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        vm.save()
+        vm.saveOnPause()
     }
 }

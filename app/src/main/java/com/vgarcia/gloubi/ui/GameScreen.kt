@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Autorenew
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -177,7 +178,8 @@ fun GameScreen(
     bigFeedTick: Int,
     onFeedBig: () -> Unit,
     onToggleAutoFeed: () -> Unit,
-    onDismissOffline: () -> Unit
+    onDismissOffline: () -> Unit,
+    onSettings: () -> Unit
 ) {
     val boosted    = nowMs < player.boostUntil
     val boostLeftSec = if (boosted) ((player.boostUntil - nowMs) / 1_000L) + 1 else 0L
@@ -224,13 +226,27 @@ fun GameScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Titre
-                Text(
-                    "Gloubi",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
-                )
+                // Header
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        "Gloubi",
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.White,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                    androidx.compose.material3.IconButton(onClick = onSettings) {
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = "Paramètres",
+                            tint = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
                 // Bannière hors-ligne
                 AnimatedVisibility(
@@ -396,13 +412,13 @@ private fun previewPlayer(
     boostUntil = boostUntil, autoFeedUntil = autoFeedUntil, adsToday = adsToday)
 
 @Preview(name = "Normal", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewNormal() { GloubiTheme { GameScreen(previewPlayer(50.0, 250.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}) } }
+@Composable private fun PreviewNormal() { GloubiTheme { GameScreen(previewPlayer(50.0, 250.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
 
 @Preview(name = "Rassasié + boost", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewBoosted() { val n = System.currentTimeMillis(); GloubiTheme { GameScreen(previewPlayer(99.5, 750.0, n + 180_000), n, true, 0.0, 0, {}, {}, 0, {}, {}, {}) } }
+@Composable private fun PreviewBoosted() { val n = System.currentTimeMillis(); GloubiTheme { GameScreen(previewPlayer(99.5, 750.0, n + 180_000), n, true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
 
 @Preview(name = "Critique", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewCritical() { GloubiTheme { GameScreen(previewPlayer(10.0, 500.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}) } }
+@Composable private fun PreviewCritical() { GloubiTheme { GameScreen(previewPlayer(10.0, 500.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
 
 @Preview(name = "Hors-ligne", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewOffline() { GloubiTheme { GameScreen(previewPlayer(60.0, 3100.0), System.currentTimeMillis(), true, 42.0, 0, {}, {}, 0, {}, {}, {}) } }
+@Composable private fun PreviewOffline() { GloubiTheme { GameScreen(previewPlayer(60.0, 3100.0), System.currentTimeMillis(), true, 42.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
