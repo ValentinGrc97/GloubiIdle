@@ -152,7 +152,7 @@ fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean
     Canvas(modifier.size(240.dp)) {
         val w = size.width
         val h = size.height
-        val variableByLevel = (0.05f + 0.10f*level)/2 //augmentation dimensions par niveau
+        val variableByLevel = (0.05f + 0.05f*level)/2 //augmentation dimensions par niveau
         val cx = w / 2f
         val r = w * variableByLevel * breathe //taille
         val ground = h * 0.58f + w * variableByLevel

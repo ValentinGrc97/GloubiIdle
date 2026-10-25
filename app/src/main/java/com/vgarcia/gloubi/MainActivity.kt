@@ -9,7 +9,6 @@ import android.view.WindowInsetsController
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -28,6 +27,7 @@ import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.content.edit
+import com.vgarcia.gloubi.ui.theme.GloubiTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -67,7 +67,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            GloubiTheme {
                 val player by vm.player.collectAsState()
                 val offline by vm.offlineGain.collectAsState()
                 val adReady by adManager.isReady.collectAsState()
