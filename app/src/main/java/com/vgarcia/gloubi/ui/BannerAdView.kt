@@ -16,11 +16,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.vgarcia.gloubi.BuildConfig
 
 @Composable
 fun BannerAdView(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111"
 ) {
     Box(
         modifier = modifier
@@ -47,7 +47,7 @@ fun BannerAdView(
                 factory = { context ->
                     AdView(context).apply {
                         setAdSize(AdSize.BANNER)
-                        setAdUnitId(adUnitId)
+                        adUnitId = BuildConfig.ADMOB_BANNER_ID
                         loadAd(AdRequest.Builder().build())
                     }
                 }

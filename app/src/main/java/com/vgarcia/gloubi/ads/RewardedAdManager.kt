@@ -9,15 +9,16 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.vgarcia.gloubi.BuildConfig
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class RewardedAdManager(private val context: Context) {
-
+class RewardedAdManager(
+    private val context: Context,
+    private val adUnitId: String
+) {
     companion object {
-        // ID de TEST Google pour les pubs rewarded. À remplacer par votre vrai bloc.
-        private const val AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
         private const val TAG = "RewardedAdManager"
     }
 
@@ -30,19 +31,20 @@ class RewardedAdManager(private val context: Context) {
     fun load() {
         if (loading || rewardedAd != null) return
         loading = true
+        if (BuildConfig.IS_DEBUG) Log.d(TAG, "Chargement pub rewarded [$adUnitId]")
         RewardedAd.load(
             context,
-            AD_UNIT_ID,
+            adUnitId,
             AdRequest.Builder().build(),
             object : RewardedAdLoadCallback() {
                 override fun onAdLoaded(ad: RewardedAd) {
                     rewardedAd = ad
                     loading = false
                     _isReady.value = true
+                    if (BuildConfig.IS_DEBUG) Log.d(TAG, "Pub chargée [$adUnitId]")
                 }
-
                 override fun onAdFailedToLoad(error: LoadAdError) {
-                    Log.w(TAG, "Chargement échoué: ${error.message}")
+                    Log.w(TAG, "Échec chargement [$adUnitId] : ${error.message}")
                     rewardedAd = null
                     loading = false
                     _isReady.value = false
@@ -58,10 +60,10 @@ class RewardedAdManager(private val context: Context) {
             override fun onAdDismissedFullScreenContent() {
                 rewardedAd = null
                 _isReady.value = false
-                load() // précharge la suivante
+                load()
             }
-
             override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                Log.w(TAG, "Échec affichage : ${error.message}")
                 rewardedAd = null
                 _isReady.value = false
                 load()

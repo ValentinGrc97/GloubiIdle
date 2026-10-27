@@ -32,27 +32,39 @@ import com.vgarcia.gloubi.ui.theme.GloubiTheme
 class MainActivity : ComponentActivity() {
 
     private val vm: GameViewModel by viewModels()
-    private lateinit var adManager: RewardedAdManager
-    private val adsInitialized = AtomicBoolean(false)
+
+    // Trois managers distincts : boost, grosse ration, auto-nourrissage
+    private lateinit var adManagerBoost:   RewardedAdManager
+    private lateinit var adManagerBigFeed: RewardedAdManager
+    private lateinit var adManagerAuto:    RewardedAdManager
+
+    private val adsInitialized  = AtomicBoolean(false)
     private val consentRequested = AtomicBoolean(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-        adManager = RewardedAdManager(applicationContext)
+
+        // Chaque manager reçoit son propre ID de bloc depuis BuildConfig
+        adManagerBoost   = RewardedAdManager(applicationContext, BuildConfig.ADMOB_REWARDED_BOOST_ID)
+        adManagerBigFeed = RewardedAdManager(applicationContext, BuildConfig.ADMOB_REWARDED_BIG_FEED_ID)
+        adManagerAuto    = RewardedAdManager(applicationContext, BuildConfig.ADMOB_REWARDED_AUTO_ID)
+
         HungerScheduler.schedule(this)
 
         setContent {
             GloubiTheme {
-                val player        by vm.player.collectAsState()
-                val offline       by vm.offlineGain.collectAsState()
-                val adReady       by adManager.isReady.collectAsState()
-                val feedTick      by vm.feedTick.collectAsState()
-                val bigFeedTick   by vm.bigFeedTick.collectAsState()
-                var now           by remember { mutableLongStateOf(System.currentTimeMillis()) }
-                var showSettings  by remember { mutableStateOf(false) }
-
-                // Notifications activées = permission accordée
+                val player      by vm.player.collectAsState()
+                val offline     by vm.offlineGain.collectAsState()
+                val boostReady  by adManagerBoost.isReady.collectAsState()
+                val bigReady    by adManagerBigFeed.isReady.collectAsState()
+                val autoReady   by adManagerAuto.isReady.collectAsState()
+                // adReady = true si au moins un manager est prêt (pour l'affichage général)
+                val adReady = boostReady || bigReady || autoReady
+                val feedTick    by vm.feedTick.collectAsState()
+                val bigFeedTick by vm.bigFeedTick.collectAsState()
+                var now         by remember { mutableLongStateOf(System.currentTimeMillis()) }
+                var showSettings by remember { mutableStateOf(false) }
                 val notifEnabled = remember {
                     mutableStateOf(
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -77,7 +89,7 @@ class MainActivity : ComponentActivity() {
                             else HungerScheduler.cancel(this)
                         },
                         onOpenConsentForm = {
-                            UserMessagingPlatform.showPrivacyOptionsForm(this) { /* formulaire fermé */ }
+                            UserMessagingPlatform.showPrivacyOptionsForm(this) {}
                         },
                         onResetProgress = {
                             vm.resetProgress()
@@ -97,13 +109,14 @@ class MainActivity : ComponentActivity() {
                             if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
                         },
                         onWatchBoostAd = {
-                            if (vm.canWatchAd()) adManager.show(this) { vm.onBoostAdRewarded() }
+                            if (vm.canWatchAd() && boostReady)
+                                adManagerBoost.show(this) { vm.onBoostAdRewarded() }
                         },
                         onFeedBig = {
-                            adManager.show(this) { vm.onBigFeedAdRewarded() }
+                            if (bigReady) adManagerBigFeed.show(this) { vm.onBigFeedAdRewarded() }
                         },
                         onToggleAutoFeed = {
-                            adManager.show(this) { vm.onAutoFeedRewarded() }
+                            if (autoReady) adManagerAuto.show(this) { vm.onAutoFeedRewarded() }
                         },
                         onDismissOffline = vm::dismissOfflineGain,
                         onSettings = { showSettings = true }
@@ -115,13 +128,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (consentRequested.compareAndSet(false, true)) {
-            requestConsentThenInitAds()
-        }
+        if (consentRequested.compareAndSet(false, true)) requestConsentThenInitAds()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
-            }
         }
         vm.consumePendingBigFeed()
         getSharedPreferences(HungerNotificationWorker.PREFS_NAME, MODE_PRIVATE).edit {
@@ -150,7 +160,11 @@ class MainActivity : ComponentActivity() {
 
     private fun initAds() {
         if (adsInitialized.getAndSet(true)) return
-        MobileAds.initialize(this) { adManager.load() }
+        MobileAds.initialize(this) {
+            adManagerBoost.load()
+            adManagerBigFeed.load()
+            adManagerAuto.load()
+        }
     }
 
     override fun onStop() {

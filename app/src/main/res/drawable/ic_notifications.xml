@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Icône de notification GloubiIdle
+    Chemin : res/drawable/ic_notification.xml
+    Usage   : NotificationCompat.Builder(...).setSmallIcon(R.drawable.ic_notification)
+    Format  : Vector Drawable 24×24 dp, blanc pur sur fond transparent
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Oreille gauche -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M7,3 C5.3,3 4,4.3 4,6 C4,7.7 5.3,9 7,9 C8.7,9 10,7.7 10,6 C10,4.3 8.7,3 7,3 Z" />
+
+    <!-- Oreille droite -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M17,3 C15.3,3 14,4.3 14,6 C14,7.7 15.3,9 17,9 C18.7,9 20,7.7 20,6 C20,4.3 18.7,3 17,3 Z" />
+
+    <!-- Corps -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M12,5 C7.6,5 4,8.6 4,13 C4,17.4 7.6,21 12,21 C16.4,21 20,17.4 20,13 C20,8.6 16.4,5 12,5 Z" />
+
+    <!-- Œil gauche (cercle évidé avec stroke blanc épais — astuce notification) -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M9.5,12 A1,1 0 1,0 9.5,14 A1,1 0 1,0 9.5,12 Z" />
+
+    <!-- Œil droit -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:pathData="M14.5,12 A1,1 0 1,0 14.5,14 A1,1 0 1,0 14.5,12 Z" />
+
+    <!-- Sourire -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.4"
+        android:strokeLineCap="round"
+        android:pathData="M9.5,16.5 Q12,18.5 14.5,16.5" />
+
+</vector>

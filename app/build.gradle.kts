@@ -11,12 +11,47 @@ android {
         applicationId = "com.vgarcia.gloubi"
         minSdk = 24
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.1"
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix = ".dev"
+            versionNameSuffix = "-dev"
+            isDebuggable = true
+            isMinifyEnabled = false
+            // IDs AdMob de TEST Google
+            buildConfigField("String", "ADMOB_APP_ID",      "\"ca-app-pub-3940256099942544~3347511713\"")
+            buildConfigField("String", "ADMOB_BANNER_ID",   "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("String", "ADMOB_REWARDED_BOOST_ID",    "\"ca-app-pub-3940256099942544/5224354917\"")
+            buildConfigField("String", "ADMOB_REWARDED_BIG_FEED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
+            buildConfigField("String", "ADMOB_REWARDED_AUTO_ID",     "\"ca-app-pub-3940256099942544/5224354917\"")
+            buildConfigField("Boolean", "IS_DEBUG", "true")
+            resValue("string", "app_name", "GloubiIdle DEV")
+            manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-3940256099942544~3347511713"
+        }
+        release {
+            isDebuggable = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            buildConfigField("String", "ADMOB_APP_ID",      "\"ca-app-pub-5168307355330093~3429507831\"")
+            buildConfigField("String", "ADMOB_BANNER_ID",   "\"ca-app-pub-5168307355330093/8490262824\"")
+            buildConfigField("String", "ADMOB_REWARDED_BOOST_ID",    "\"ca-app-pub-5168307355330093/9514951336\"")
+            buildConfigField("String", "ADMOB_REWARDED_BIG_FEED_ID", "\"ca-app-pub-5168307355330093/2323776894\"")
+            buildConfigField("String", "ADMOB_REWARDED_AUTO_ID",     "\"ca-app-pub-5168307355330093/4904788337\"")
+            buildConfigField("Boolean", "IS_DEBUG", "false")
+            resValue("string", "app_name", "GloubiIdle")
+            manifestPlaceholders["ADMOB_APP_ID"] = "ca-app-pub-5168307355330093~3429507831"
+        }
     }
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
