@@ -18,7 +18,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.vgarcia.gloubi.R
 import com.vgarcia.gloubi.ui.theme.GloubiGreen
 import com.vgarcia.gloubi.ui.theme.GloubiOrange
 import com.vgarcia.gloubi.ui.theme.GloubiRed
@@ -86,7 +88,7 @@ fun LevelBadge(level: Int, modifier: Modifier = Modifier) {
         contentAlignment = androidx.compose.ui.Alignment.Center
     ) {
         androidx.compose.material3.Text(
-            "Niv. $level",
+            stringResource(R.string.lvl) + level,
             style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
             color = Color(0xFF1A1A00)
         )

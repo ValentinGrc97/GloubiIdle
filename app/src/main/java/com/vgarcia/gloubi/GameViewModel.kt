@@ -33,18 +33,64 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     val bigFeedTick: StateFlow<Int> = _bigFeedTick.asStateFlow()
     private val _pendingBigFeed = MutableStateFlow(false)
 
-    private fun today(now: Long) = now / 86_400_000L
+    private fun today(now: Long = System.currentTimeMillis()) = now / 86_400_000L
+
+    // ── Accès gratuit quotidien ───────────────────────────────────────────────
+
+    fun canUseFreeBoost()    = _player.value.freeBoostUsedDay    != today()
+    fun canUseFreeBigFeed()  = _player.value.freeBigFeedUsedDay  != today()
+    fun canUseFreeAutoFeed() = _player.value.freeAutoFeedUsedDay != today()
+
+    /** Boost gratuit : même récompense qu'une pub, consomme le slot quotidien. */
+    fun useFreeBoost() {
+        val now = System.currentTimeMillis()
+        val p = _player.value
+        _player.value = p.copy(
+            boostUntil = max(now, p.boostUntil) + GameConfig.BOOST_MS,
+            freeBoostUsedDay = today(now)
+        )
+        save()
+    }
+
+    /** Grosse ration gratuite : marque le pending, sera consommé à onResume. */
+    fun useFreeBigFeed() {
+        val now = System.currentTimeMillis()
+        val p = _player.value
+        _player.value = p.copy(freeBigFeedUsedDay = today(now))
+        _pendingBigFeed.value = true
+        save()
+        consumePendingBigFeed()
+    }
+
+    /** Auto-nourrissage gratuit : +15 min, consomme le slot quotidien. */
+    fun useFreeAutoFeed() {
+        val now = System.currentTimeMillis()
+        val p = _player.value
+        val currentUntil = max(now, p.autoFeedUntil)
+        val newUntil = min(
+            currentUntil + GameConfig.AUTO_FEED_REWARD_MS,
+            now + GameConfig.AUTO_FEED_MAX_MS
+        )
+        _player.value = p.copy(
+            autoFeedUntil = newUntil,
+            freeAutoFeedUsedDay = today(now)
+        )
+        save()
+    }
+
+    // ── Init ─────────────────────────────────────────────────────────────────
 
     init {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
             val saved = dao.get() ?: Player(lastSeen = now)
-            var p = if (saved.adsDay != today(now)) saved.copy(adsToday = 0, adsDay = today(now)) else saved
+            var p = if (saved.adsDay != today(now))
+                saved.copy(adsToday = 0, adsDay = today(now)) else saved
 
             // Hors-ligne : la faim baisse, et les gains ne courent que tant que l'animal reste >= 95 %
             val elapsedMs = (now - saved.lastSeen).coerceIn(0L, GameConfig.MAX_OFFLINE_MS)
 
-            // Faim hors-ligne : auto-nourrissage actif seulement tant que autoFeedUntil n'est pas dépassé
+            // Faim hors-ligne : auto-nourrissage actif seulement tant qu'autoFeedUntil n'est pas dépassé
             val autoActiveMs = (min(now, saved.autoFeedUntil) - saved.lastSeen).coerceAtLeast(0L)
             val netDecay = GameConfig.DECAY_PER_SEC * elapsedMs / 1000.0 -
                     GameConfig.AUTO_FEED_PER_SEC * autoActiveMs / 1000.0
@@ -74,6 +120,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    // ── Tick ─────────────────────────────────────────────────────────────────
+
     private fun tick() {
         val now = System.currentTimeMillis()
         val p = _player.value
@@ -90,37 +138,37 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    // ── Persistence ──────────────────────────────────────────────────────────
+
     fun save() {
         viewModelScope.launch(Dispatchers.IO) { dao.save(_player.value) }
     }
 
     fun saveOnPause() {
-        val p = _player.value
         val now = System.currentTimeMillis()
-        val updated = p.copy(lastSeen = now)
+        val updated = _player.value.copy(lastSeen = now)
         _player.value = updated
         viewModelScope.launch(Dispatchers.IO) { dao.save(updated) }
     }
+
+    // ── Alimentation ─────────────────────────────────────────────────────────
 
     private fun feed(amount: Double) {
         val p = _player.value
         _player.value = p.copy(satiety = min(100.0, p.satiety + amount))
         when {
-            amount == 10.0 -> _bigFeedTick.value++
+            amount == GameConfig.FEED_BIG -> _bigFeedTick.value++
             else -> _feedTick.value++
         }
-
     }
 
-    /** Bouton 1 : +0,02 %. */
+    /** Bouton 1 : +0,01 %. */
     fun feedSmall() = feed(GameConfig.FEED_SMALL)
     /** Bouton 2 : Boost pour Bouton 1. */
     fun feedBoost() = feed(GameConfig.FEED_BOOST)
+    fun feedBig()   = feed(GameConfig.FEED_BIG)
 
-    /** Bouton 3 : +10 %. */
-    fun feedBig() {
-        feed(GameConfig.FEED_BIG)
-    }
+    // ── Récompenses pub ──────────────────────────────────────────────────────
 
     fun canWatchAd(): Boolean = _player.value.adsToday < GameConfig.MAX_ADS_PER_DAY
     fun boosted(): Boolean = _player.value.boostUntil > System.currentTimeMillis()
@@ -147,9 +195,19 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val now = System.currentTimeMillis()
         val p = _player.value
         val currentUntil = max(now, p.autoFeedUntil)
-        val newUntil = min(currentUntil + GameConfig.AUTO_FEED_REWARD_MS, now + GameConfig.AUTO_FEED_MAX_MS)
+        val newUntil = min(
+            currentUntil + GameConfig.AUTO_FEED_REWARD_MS,
+            now + GameConfig.AUTO_FEED_MAX_MS
+        )
         _player.value = p.copy(autoFeedUntil = newUntil)
         save()
+    }
+
+    fun consumePendingBigFeed() {
+        if (_pendingBigFeed.value) {
+            _pendingBigFeed.value = false
+            feedBig()
+        }
     }
 
     fun dismissOfflineGain() { _offlineGain.value = 0.0 }
@@ -160,12 +218,5 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         _player.value = fresh
         _offlineGain.value = 0.0
         viewModelScope.launch(Dispatchers.IO) { dao.save(fresh) }
-    }
-
-    fun consumePendingBigFeed() {
-        if (_pendingBigFeed.value) {
-            _pendingBigFeed.value = false
-            feedBig()
-        }
     }
 }

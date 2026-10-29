@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gloubi</string>
+    <string name="settings">Impostazioni</string>
+    <string name="during_offline">🌙 Durante l\'assenza :</string>
+    <string name="level">livello</string>
+    <string name="lvl">Liv.</string>
+    <string name="satiety">Sazietà</string>
+    <string name="earning_boosted">"✨ Sazio · Boost rimanente : "</string>
+    <string name="earning">✅ Gloubi è sazio!</string>
+    <string name="feed">Nutrire</string>
+    <string name="boost_remaining">"⚡ Boost rimanente : "</string>
+    <string name="reach">Raggiungi</string>
+    <string name="hungry">⚠️ Gloubi ha molta fame!</string>
+    <string name="get_gloubi_grow">per guadagnare XP e far crescere Gloubi</string>
+    <string name="boosted_active">Boost attivo</string>
+    <string name="auto_feed_active">"🔄 Alimentazione automatica attiva — rimanente"</string>
+    <string name="add">Aggiungi</string>
+    <string name="left">rimanenti</string>
+    <string name="limit_reached">Limite raggiunto</string>
+    <string name="loading">Caricamento…</string>
+    <string name="boost_feed">Boost alimentazione x10</string>
+    <string name="free">Gratuito</string>
+    <string name="big_feed">Razione abbondante</string>
+    <string name="ceiling">Massimo</string>
+    <string name="progress">Progresso</string>
+    <string name="next_level_in">Prossimo livello in</string>
+    <string name="reset_progress">Azzerare il progresso?</string>
+    <string name="reset_progress_desc">Tutto il tuo progresso, i livelli e i guadagni verranno eliminati definitivamente. Questa azione è irreversibile.</string>
+    <string name="reset">Azzera</string>
+    <string name="cancel">Annulla</string>
+    <string name="back">Indietro</string>
+    <string name="notifications">Notifiche</string>
+    <string name="hungry_alerts">Avvisi di fame</string>
+    <string name="notify_hungry">Notifica quando Gloubi ha fame o è vuoto</string>
+    <string name="system_settings">Apri impostazioni di sistema</string>
+    <string name="activate_notifications">Attiva notifiche per questa app</string>
+    <string name="privacy_ads">Privacy e pubblicità</string>
+    <string name="manage_ads">Gestisci le mie preferenze pubblicitarie</string>
+    <string name="update_rgpd">Modifica preferenze sulla privacy</string>
+    <string name="privacy_policy">Informativa sulla privacy</string>
+    <string name="terms_use">Termini di utilizzo</string>
+    <string name="delete_level">Elimina tutti i tuoi livelli e guadagni</string>
+    <string name="about">Informazioni</string>
+    <string name="version">Versione</string>
+</resources>

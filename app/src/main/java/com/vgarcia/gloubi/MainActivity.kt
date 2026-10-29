@@ -109,17 +109,29 @@ class MainActivity : ComponentActivity() {
                             if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
                         },
                         onWatchBoostAd = {
-                            if (vm.canWatchAd() && boostReady)
-                                adManagerBoost.show(this) { vm.onBoostAdRewarded() }
+                            when {
+                                vm.canUseFreeBoost() -> vm.useFreeBoost()
+                                vm.canWatchAd() && boostReady ->
+                                    adManagerBoost.show(this) { vm.onBoostAdRewarded() }
+                            }
                         },
                         onFeedBig = {
-                            if (bigReady) adManagerBigFeed.show(this) { vm.onBigFeedAdRewarded() }
+                            when {
+                                vm.canUseFreeBigFeed() -> vm.useFreeBigFeed()
+                                bigReady -> adManagerBigFeed.show(this) { vm.onBigFeedAdRewarded() }
+                            }
                         },
                         onToggleAutoFeed = {
-                            if (autoReady) adManagerAuto.show(this) { vm.onAutoFeedRewarded() }
+                            when {
+                                vm.canUseFreeAutoFeed() -> vm.useFreeAutoFeed()
+                                autoReady -> adManagerAuto.show(this) { vm.onAutoFeedRewarded() }
+                            }
                         },
                         onDismissOffline = vm::dismissOfflineGain,
-                        onSettings = { showSettings = true }
+                        onSettings = { showSettings = true },
+                        freeBoostAvailable    = vm.canUseFreeBoost(),
+                        freeBigFeedAvailable  = vm.canUseFreeBigFeed(),
+                        freeAutoFeedAvailable = vm.canUseFreeAutoFeed()
                     )
                 }
             }

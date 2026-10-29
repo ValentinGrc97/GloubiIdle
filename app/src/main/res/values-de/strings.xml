@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Gloubi</string>
+    <string name="settings">Einstellungen</string>
+    <string name="during_offline">🌙 Während der Abwesenheit :</string>
+    <string name="level">Stufe</string>
+    <string name="lvl">Lvl.</string>
+    <string name="satiety">Sättigung</string>
+    <string name="earning_boosted">"✨ Gesättigt · Verbleibender Boost : "</string>
+    <string name="earning">✅ Gloubi ist gesättigt!</string>
+    <string name="feed">Füttern</string>
+    <string name="boost_remaining">"⚡ Verbleibender Boost : "</string>
+    <string name="reach">Erreiche</string>
+    <string name="hungry">⚠️ Gloubi hat großen Hunger!</string>
+    <string name="get_gloubi_grow">um XP zu verdienen und Gloubi wachsen zu lassen</string>
+    <string name="boosted_active">Boost aktiv</string>
+    <string name="auto_feed_active">"🔄 Automatische Fütterung aktiv — verbleibend"</string>
+    <string name="add">Hinzufügen</string>
+    <string name="left">verbleibend</string>
+    <string name="limit_reached">Limit erreicht</string>
+    <string name="loading">Wird geladen…</string>
+    <string name="boost_feed">Fütterungs-Boost x10</string>
+    <string name="free">Kostenlos</string>
+    <string name="big_feed">Große Portion</string>
+    <string name="ceiling">Maximum</string>
+    <string name="progress">Fortschritt</string>
+    <string name="next_level_in">Nächste Stufe in</string>
+    <string name="reset_progress">Fortschritt zurücksetzen?</string>
+    <string name="reset_progress_desc">Alle deine Fortschritte, Stufen und Gewinne werden dauerhaft gelöscht. Diese Aktion ist unwiderruflich.</string>
+    <string name="reset">Zurücksetzen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="back">Zurück</string>
+    <string name="notifications">Benachrichtigungen</string>
+    <string name="hungry_alerts">Hunger-Benachrichtigungen</string>
+    <string name="notify_hungry">Benachrichtigen, wenn Gloubi hungrig oder leer ist</string>
+    <string name="system_settings">Systemeinstellungen öffnen</string>
+    <string name="activate_notifications">Benachrichtigungen für diese App aktivieren</string>
+    <string name="privacy_ads">Datenschutz &amp; Werbung</string>
+    <string name="manage_ads">Meine Werbeeinstellungen verwalten</string>
+    <string name="update_rgpd">Datenschutzeinstellungen ändern</string>
+    <string name="privacy_policy">Datenschutzerklärung</string>
+    <string name="terms_use">Nutzungsbedingungen</string>
+    <string name="delete_level">Alle deine Stufen und Gewinne löschen</string>
+    <string name="about">Über die App</string>
+    <string name="version">Version</string>
+</resources>

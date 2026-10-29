@@ -18,7 +18,12 @@ data class Player(
     val boostUntil: Long = 0L,                          // fin du boost x10 obtenu via pub rewarded
     val autoFeedUntil: Long = 0L,                       // timestamp de fin de l'auto-nourrissage (0 = inactif)
     val adsToday: Int = 0,                              // nombre d'Ads vues sur la journée
-    val adsDay: Long = 0L
+    val adsDay: Long = 0L,
+
+    // Usage gratuit quotidien : 0 = disponible, sinon = jour (UTC) de la dernière utilisation
+    val freeBoostUsedDay: Long = 0L,
+    val freeBigFeedUsedDay: Long = 0L,
+    val freeAutoFeedUsedDay: Long = 0L,
 )
 
 @Dao
@@ -30,7 +35,7 @@ interface PlayerDao {
     suspend fun save(player: Player)
 }
 
-@Database(entities = [Player::class], version = 4, exportSchema = false)
+@Database(entities = [Player::class], version = 5, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun dao(): PlayerDao
 

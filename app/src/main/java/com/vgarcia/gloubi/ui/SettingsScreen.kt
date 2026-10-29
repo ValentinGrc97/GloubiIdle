@@ -1,7 +1,6 @@
 package com.vgarcia.gloubi.ui
 
 import android.content.Intent
-import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -19,7 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Gavel
 import androidx.compose.material.icons.rounded.ManageAccounts
@@ -30,7 +29,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -50,6 +49,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -61,10 +61,12 @@ import com.vgarcia.gloubi.ui.theme.GloubiRed
 import com.vgarcia.gloubi.ui.theme.GloubiSurface
 import com.vgarcia.gloubi.ui.theme.GloubiSurface2
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
+import androidx.core.net.toUri
+import com.vgarcia.gloubi.R
 
 // URL à remplacer par votre vraie politique de confidentialité
-private const val PRIVACY_POLICY_URL = "https://votre-site.com/privacy"
-private const val TERMS_URL          = "https://votre-site.com/terms"
+private const val PRIVACY_POLICY_URL = "https://valentingrc97.github.io/RulesFiles/gloubi-privacy-policy.html"
+private const val TERMS_URL          = "https://valentingrc97.github.io/RulesFiles/gloubi-terms-of-service.html"
 
 @Composable
 private fun SettingsSection(title: String, content: @Composable () -> Unit) {
@@ -124,10 +126,10 @@ private fun SettingsRow(
 
 @Composable
 private fun SettingsDivider() {
-    Divider(
+    HorizontalDivider(
         modifier = Modifier.padding(start = 68.dp),
-        color = GloubiSurface2,
-        thickness = 1.dp
+        thickness = 1.dp,
+        color = GloubiSurface2
     )
 }
 
@@ -145,16 +147,16 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { Text("Réinitialiser la progression ?") },
-            text = { Text("Toute votre progression, vos niveaux et vos gains seront supprimés définitivement. Cette action est irréversible.") },
+            title = { stringResource(R.string.reset_progress)},
+            text = { stringResource(R.string.reset_progress_desc) },
             confirmButton = {
                 Button(
                     onClick = { showResetDialog = false; onResetProgress() },
                     colors = ButtonDefaults.buttonColors(containerColor = GloubiRed)
-                ) { Text("Réinitialiser") }
+                ) { stringResource(R.string.reset) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { Text("Annuler") }
+                TextButton(onClick = { showResetDialog = false }) { stringResource(R.string.cancel) }
             },
             containerColor = GloubiSurface
         )
@@ -176,10 +178,10 @@ fun SettingsScreen(
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 16.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
-                    Icon(Icons.Rounded.ArrowBack, "Retour", tint = Color.White)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), tint = Color.White)
                 }
                 Text(
-                    "Paramètres",
+                    stringResource(R.string.settings),
                     style = MaterialTheme.typography.headlineMedium,
                     color = Color.White,
                     modifier = Modifier.padding(start = 4.dp)
@@ -187,11 +189,11 @@ fun SettingsScreen(
             }
 
             // Notifications
-            SettingsSection("Notifications") {
+            SettingsSection(stringResource(R.string.notifications)) {
                 SettingsRow(
                     icon = Icons.Rounded.Notifications,
-                    title = "Alertes de faim",
-                    subtitle = "Notifier quand Gloubi a faim ou est vide",
+                    title = stringResource(R.string.hungry_alerts),
+                    subtitle = stringResource(R.string.notify_hungry),
                     trailing = {
                         Switch(
                             checked = notificationsEnabled,
@@ -205,8 +207,8 @@ fun SettingsScreen(
                     SettingsRow(
                         icon = Icons.Rounded.Notifications,
                         iconTint = GloubiOrange,
-                        title = "Ouvrir les paramètres système",
-                        subtitle = "Activer les notifications pour cette appli",
+                        title = stringResource(R.string.system_settings),
+                        subtitle = stringResource(R.string.activate_notifications),
                         trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
                         onClick = {
                             context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
@@ -218,47 +220,47 @@ fun SettingsScreen(
             }
 
             // Confidentialité
-            SettingsSection("Confidentialité & Publicités") {
+            SettingsSection(stringResource(R.string.privacy_ads)) {
                 SettingsRow(
                     icon = Icons.Rounded.ManageAccounts,
                     iconTint = GloubiOrange,
-                    title = "Gérer mes choix publicitaires",
-                    subtitle = "Modifier vos préférences RGPD",
+                    title = stringResource(R.string.manage_ads),
+                    subtitle = stringResource(R.string.update_rgpd),
                     trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
                     onClick = onOpenConsentForm
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Gavel,
-                    title = "Politique de confidentialité",
+                    title = stringResource(R.string.privacy_policy),
                     trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
-                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL))) }
+                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, PRIVACY_POLICY_URL.toUri())) }
                 )
                 SettingsDivider()
                 SettingsRow(
                     icon = Icons.Rounded.Gavel,
-                    title = "Conditions d'utilisation",
+                    title = stringResource(R.string.terms_use),
                     trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
-                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(TERMS_URL))) }
+                    onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, TERMS_URL.toUri())) }
                 )
             }
 
             // Progression
-            SettingsSection("Progression") {
+            SettingsSection(stringResource(R.string.progress)) {
                 SettingsRow(
                     icon = Icons.Rounded.Delete,
                     iconTint = GloubiRed,
-                    title = "Réinitialiser la progression",
-                    subtitle = "Supprimer tous vos niveaux et gains",
+                    title = stringResource(R.string.reset_progress),
+                    subtitle = stringResource(R.string.delete_level),
                     onClick = { showResetDialog = true }
                 )
             }
 
             // Infos
-            SettingsSection("À propos") {
+            SettingsSection(stringResource(R.string.about)) {
                 SettingsRow(
                     icon = Icons.Rounded.Gavel,
-                    title = "Version",
+                    title = stringResource(R.string.version),
                     subtitle = BuildConfig.VERSION_NAME
                 )
             }

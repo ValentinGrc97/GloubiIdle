@@ -21,15 +21,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Autorenew
+import androidx.compose.material.icons.outlined.RocketLaunch
+import androidx.compose.material.icons.rounded.AutoMode
+import androidx.compose.material.icons.rounded.Egg
 import androidx.compose.material.icons.rounded.PlayCircle
-import androidx.compose.material.icons.rounded.Restaurant
+import androidx.compose.material.icons.rounded.RiceBowl
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -48,8 +50,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.vgarcia.gloubi.R
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
 import com.vgarcia.gloubi.ui.theme.GloubiBackground
@@ -107,7 +111,8 @@ private fun ActionButton(
     urgent: Boolean = false,
     icon: @Composable () -> Unit,
     label: String,
-    sub: String? = null
+    sub: String? = null,
+    secondIcon: (@Composable () -> Unit)? = null
 ) {
     val haptic = LocalHapticFeedback.current
 
@@ -147,7 +152,16 @@ private fun ActionButton(
             icon()
             Spacer(Modifier.height(2.dp))
             Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White)
-            if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+
+            if (secondIcon != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                    Spacer(Modifier.width(5.dp))
+                    secondIcon()
+                }
+            } else {
+                if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+            }
         }
     }
 }
@@ -179,7 +193,10 @@ fun GameScreen(
     onFeedBig: () -> Unit,
     onToggleAutoFeed: () -> Unit,
     onDismissOffline: () -> Unit,
-    onSettings: () -> Unit
+    onSettings: () -> Unit,
+    freeBoostAvailable: Boolean = false,
+    freeBigFeedAvailable: Boolean = false,
+    freeAutoFeedAvailable: Boolean = false
 ) {
     val boosted    = nowMs < player.boostUntil
     val boostLeftSec = if (boosted) ((player.boostUntil - nowMs) / 1_000L) + 1 else 0L
@@ -233,7 +250,7 @@ fun GameScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        "Gloubi",
+                        stringResource(R.string.app_name),
                         style = MaterialTheme.typography.headlineLarge,
                         color = Color.White,
                         modifier = Modifier.padding(start = 8.dp)
@@ -241,7 +258,7 @@ fun GameScreen(
                     androidx.compose.material3.IconButton(onClick = onSettings) {
                         Icon(
                             Icons.Rounded.Settings,
-                            contentDescription = "Paramètres",
+                            contentDescription = stringResource(R.string.settings),
                             tint = Color.White.copy(alpha = 0.8f),
                             modifier = Modifier.size(24.dp)
                         )
@@ -256,7 +273,7 @@ fun GameScreen(
                     GloubiCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                "🌙 Pendant votre absence : +${fmt(offlineGain / 100)} niveau",
+                                stringResource(R.string.during_offline) + " +${fmt(offlineGain / 100)} " + stringResource(R.string.level),
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -285,7 +302,7 @@ fun GameScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "Faim",
+                                    stringResource(R.string.satiety),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -305,18 +322,18 @@ fun GameScreen(
                             )
                             Text(
                                 when {
-                                    earning && boosted -> "✨ Rassasié · Boost $boostLabel"
-                                    earning            -> "✅ Gloubi est rassasié !"
-                                    boosted            -> "⚡ Boost $boostLabel · Atteindre ${GameConfig.GAIN_THRESHOLD.toInt()} %"
-                                    critical           -> "⚠️ Gloubi a très faim !"
-                                    else               -> "Atteindre ${GameConfig.GAIN_THRESHOLD.toInt()} % pour gagner des XP"
+                                    earning && boosted -> stringResource(R.string.earning_boosted) + boostLabel
+                                    earning            -> stringResource(R.string.earning)
+                                    boosted            -> stringResource(R.string.boost_remaining) + boostLabel + " · " + stringResource(R.string.reach) + " " + GameConfig.GAIN_THRESHOLD.toInt() + "%"
+                                    critical           -> stringResource(R.string.hungry)
+                                    else               -> stringResource(R.string.reach) + " " + GameConfig.GAIN_THRESHOLD.toInt() + "% " + stringResource(R.string.get_gloubi_grow)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (autoActive) {
                                 Text(
-                                    "🔄 Auto-nourrissage actif — encore $autoLabel",
+                                    stringResource(R.string.auto_feed_active) + " " + autoLabel,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = GloubiOrange
                                 )
@@ -332,42 +349,59 @@ fun GameScreen(
                         onClick = onFeed,
                         urgent = critical,
                         active = boosted,
-                        icon = { Icon(Icons.Rounded.Restaurant, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = "Nourrir",
+                        icon = { Icon(Icons.Rounded.Egg, null, Modifier.size(22.dp), tint = Color.White) },
+                        label = stringResource(R.string.feed),
                         sub = if (boosted) "+${GameConfig.FEED_BOOST} %" else "+${GameConfig.FEED_SMALL} %",
-                        modifier = half
+                        modifier = half,
                     )
                     ActionButton(
                         onClick = onWatchBoostAd,
-                        enabled = adReady && adsLeft > 0,
-                        icon = { Icon(Icons.Rounded.PlayCircle, null, Modifier.size(22.dp), tint = Color.White) },
+                        enabled = freeBoostAvailable || (adReady && adsLeft > 0),
+                        icon = { Icon(Icons.Outlined.RocketLaunch, null, Modifier.size(22.dp), tint = Color.White) },
                         label = when {
-                            adsLeft <= 0 -> "Limite atteinte"
-                            !adReady     -> "Chargement…"
-                            boosted      -> "Boost actif"
-                            else         -> "Boost x10"
+                            boosted               -> stringResource(R.string.boosted_active)
+                            adsLeft <= 0          -> stringResource(R.string.limit_reached)
+                            !adReady              -> stringResource(R.string.loading)
+                            else                  -> stringResource(R.string.boost_feed)
                         },
-                        sub = if (adsLeft > 0 && adReady && !boosted) "5 min · $adsLeft restants" else null,
-                        modifier = half
+                        sub = when {
+                            freeBoostAvailable -> (GameConfig.BOOST_MS/1000/60).toString() + " min · " + stringResource(R.string.free)
+                            boosted            -> stringResource(R.string.add) + (GameConfig.BOOST_MS/1000/60).toString() + " min · $adsLeft " + stringResource(R.string.left)
+                            adsLeft > 0 && adReady -> (GameConfig.BOOST_MS/1000/60).toString() + " min · $adsLeft " + stringResource(R.string.left)
+                            else               -> null
+                        },
+                        modifier = half,
+                        secondIcon = if (adsLeft > 0 && !freeBoostAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
                     )
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     ActionButton(
                         onClick = onFeedBig,
-                        enabled = adReady,
-                        icon = { Icon(Icons.Rounded.Star, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = if (adReady) "Grosse ration" else "Chargement…",
-                        sub = if (adReady) "+10 % · vidéo" else null,
-                        modifier = half
+                        enabled = freeBigFeedAvailable || adReady,
+                        icon = { Icon(Icons.Rounded.RiceBowl, null, Modifier.size(22.dp), tint = Color.White) },
+                        label = if (freeBigFeedAvailable || adReady) stringResource(R.string.big_feed) else stringResource(R.string.loading),
+                        sub = when {
+                            freeBigFeedAvailable -> "+" + GameConfig.FEED_BIG.toString() + "% · " + stringResource(R.string.free)
+                            adReady              -> "+" + GameConfig.FEED_BIG.toString() + "%"
+                            else                 -> null
+                        },
+                        modifier = half,
+                        secondIcon = if (!freeBigFeedAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
                     )
                     ActionButton(
                         onClick = onToggleAutoFeed,
-                        enabled = adReady,
+                        enabled = freeAutoFeedAvailable || adReady,
                         active = autoActive,
-                        icon = { Icon(Icons.Rounded.Autorenew, null, Modifier.size(22.dp), tint = Color.White) },
+                        icon = { Icon(Icons.Rounded.AutoMode, null, Modifier.size(22.dp), tint = Color.White) },
                         label = if (autoActive) "Auto $autoLabel" else "Auto OFF",
-                        sub = if (autoActive) "+15 min · plafond $autoCapLabel" else "+15 min · vidéo",
-                        modifier = half
+                        sub = when {
+                            freeAutoFeedAvailable  -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min · " + stringResource(R.string.free)
+                            autoActive             -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min · " + stringResource(R.string.ceiling) + " " + autoCapLabel
+                            adReady                -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min"
+                            else                   -> null
+                        },
+                        modifier = half,
+                        secondIcon = if (!freeAutoFeedAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
                     )
                 }
 
@@ -381,7 +415,7 @@ fun GameScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    "Progression",
+                                    stringResource(R.string.progress),
                                     style = MaterialTheme.typography.titleMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -389,7 +423,7 @@ fun GameScreen(
                             }
                             GloubiProgressBar(progress = (xpInLevel / xpForLevel).toFloat())
                             Text(
-                                "${fmt(xpInLevel)} / ${fmt(xpForLevel)} XP · prochain niveau dans ${fmt(xpForLevel - xpInLevel)} XP",
+                                "${fmt(xpInLevel)} / ${fmt(xpForLevel)} XP · " + stringResource(R.string.next_level_in) + " ${fmt(xpForLevel - xpInLevel)} XP",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

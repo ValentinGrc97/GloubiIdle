@@ -21,19 +21,19 @@ object GameConfig {
     const val MAX_ADS_PER_DAY = 10                   // plafond quotidien (anti-abus)
 
     // --- Niveaux (XP exponentielle) ---
-    const val XP_BASE = 100.0          // XP pour passer du niveau 0 au niveau 1
+    const val XP_BASE = 100.0          // XP pour passer du niveau 1 au niveau 2
     const val XP_MULTIPLIER = 1.5      // chaque niveau coûte XP_MULTIPLIER fois plus que le précédent
 
     /** XP totale cumulée nécessaire pour atteindre [level]. */
     fun xpRequiredForLevel(level: Int): Double {
-        if (level <= 0) return 0.0
+        if (level <= 1) return 0.0
         // Somme géométrique : XP_BASE * (2^level - 1)
         return XP_BASE * (XP_MULTIPLIER.pow(level) - 1.0) / (XP_MULTIPLIER - 1.0)
     }
 
     /** Niveau actuel à partir de la progression cumulée. */
     fun levelFromProgress(progress: Double): Int {
-        var level = 0
+        var level = 1
         while (progress >= xpRequiredForLevel(level + 1)) level++
         return level
     }

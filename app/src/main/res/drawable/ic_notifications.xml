@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Icône de notification GloubiIdle
+    Icône de notification Gloubi
     Chemin : res/drawable/ic_notification.xml
     Usage   : NotificationCompat.Builder(...).setSmallIcon(R.drawable.ic_notification)
     Format  : Vector Drawable 24×24 dp, blanc pur sur fond transparent

@@ -48,7 +48,7 @@ class HungerNotificationWorker(
                 "Gloubi a faim ! 😢",
                 "Sa jauge est vide, revenez vite le nourrir !")
             currentSatiety <= GameConfig.GAIN_THRESHOLD -> notifyIfNotPending(ctx, NOTIF_ID_THRESHOLD, KEY_THRESHOLD_PENDING,
-                "Gloubi commence à avoir faim 🍖",
+                "Gloubi commence à avoir faim 🍎",
                 "Sa jauge est sous ${GameConfig.GAIN_THRESHOLD.toInt()} %, il ne gagne plus d'XP."
             )
         }

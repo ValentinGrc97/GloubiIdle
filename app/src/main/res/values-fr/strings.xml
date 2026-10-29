@@ -1,0 +1,49 @@
+<resources>
+    <string name="app_name">Gloubi</string>
+
+    <!--Game Screen-->
+    <string name="settings">Paramètres</string>
+    <string name="during_offline">🌙 Pendant votre absence :</string>
+    <string name="level">niveau</string>
+    <string name="lvl">Niv.</string>
+    <string name="satiety">Faim</string>
+    <string name="earning_boosted">✨ Rassasié · Boost restant : </string>
+    <string name="earning">✅ Gloubi est rassasié !</string>
+    <string name="feed">Nourrir</string>
+    <string name="boost_remaining">⚡ Boost restant : </string>
+    <string name="reach">Atteindre</string>
+    <string name="hungry">⚠️ Gloubi a très faim !</string>
+    <string name="get_gloubi_grow">pour gagner des XP et faire grandir Gloubi</string>
+    <string name="boosted_active">"Boost actif"</string>
+    <string name="auto_feed_active">🔄 Auto-nourrissage actif — encore</string>
+    <string name="add">Ajouter </string>
+    <string name="left">restants</string>
+    <string name="limit_reached">"Limite atteinte"</string>
+    <string name="loading">Chargement…</string>
+    <string name="boost_feed">Boost nourriture x10</string>
+    <string name="free">Gratuit</string>
+    <string name="big_feed">Grosse ration</string>
+    <string name="ceiling">Plafond</string>
+    <string name="progress">Progression</string>
+    <string name="next_level_in">Prochain niveau dans</string>
+
+    <!--Settings Screen-->
+    <string name="reset_progress">Réinitialiser la progression ?</string>
+    <string name="reset_progress_desc">Toute votre progression, vos niveaux et vos gains seront supprimés définitivement. Cette action est irréversible.</string>"
+    <string name="reset">Réinitialiser</string>
+    <string name="cancel">Annuler</string>
+    <string name="back">Retour</string>
+    <string name="notifications">Notifications</string>
+    <string name="hungry_alerts">Alertes de faim</string>
+    <string name="notify_hungry">Notifier quand Gloubi a faim ou est vide</string>
+    <string name="system_settings">Ouvrir les paramètres système</string>
+    <string name="activate_notifications">Activer les notifications pour cette appli</string>
+    <string name="privacy_ads">Confidentialité &amp; Publicités</string>
+    <string name="manage_ads">Gérer mes choix publicitaires</string>
+    <string name="update_rgpd">Modifier vos préférences RGPD</string>
+    <string name="privacy_policy">Politique de confidentialité</string>
+    <string name="terms_use">Conditions d\'utilisation</string>
+    <string name="delete_level">Supprimer tous vos niveaux et gains</string>
+    <string name="about">À propos</string>
+    <string name="version">Version</string>
+</resources>

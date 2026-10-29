@@ -1,5 +1,5 @@
 # ──────────────────────────────────────────────────────────────────────────────
-# ProGuard / R8 — GloubiIdle
+# ProGuard / R8 — Gloubi
 # Ce fichier est utilisé uniquement en build release (isMinifyEnabled = true)
 # ──────────────────────────────────────────────────────────────────────────────
 
