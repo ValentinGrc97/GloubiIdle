@@ -33,13 +33,13 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Gloubi : une boule de poils à oreilles rondes.
- * - respire en permanence, cligne des yeux
- * - rebondit et scintille quand il est rassasié (>= 99 %)
- * - triste (larme, bouche inversée) quand la faim est basse (< 20 %)
- * - ouvre la bouche et attrape une croquette à chaque repas
+ * Respire en permanence, cligne des yeux
+ * Rebondit et scintille quand il est rassasié (>= 99 %)
+ * Triste (larme, bouche inversée) quand la faim est basse (< 20 %)
+ * Ouvre la bouche et attrape une croquette à chaque repas
  */
 @Composable
-fun AnimalView(satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean = false, level: Int, modifier: Modifier = Modifier) {
+fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean = false, level: Int) {
     val happy = satiety >= 99f
     val sad = satiety < 20f
 

@@ -273,7 +273,7 @@ fun GameScreen(
                     GloubiCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                stringResource(R.string.during_offline) + " +${fmt(offlineGain / 100)} " + stringResource(R.string.level),
+                                stringResource(R.string.during_offline) + " +$offlineGain XP",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -322,18 +322,18 @@ fun GameScreen(
                             )
                             Text(
                                 when {
-                                    earning && boosted -> stringResource(R.string.earning_boosted) + boostLabel
+                                    earning && boosted -> stringResource(R.string.earning_boosted) + " $boostLabel"
                                     earning            -> stringResource(R.string.earning)
-                                    boosted            -> stringResource(R.string.boost_remaining) + boostLabel + " · " + stringResource(R.string.reach) + " " + GameConfig.GAIN_THRESHOLD.toInt() + "%"
+                                    boosted            -> stringResource(R.string.boost_remaining) + " $boostLabel · " + stringResource(R.string.reach) + " ${GameConfig.GAIN_THRESHOLD.toInt()}%"
                                     critical           -> stringResource(R.string.hungry)
-                                    else               -> stringResource(R.string.reach) + " " + GameConfig.GAIN_THRESHOLD.toInt() + "% " + stringResource(R.string.get_gloubi_grow)
+                                    else               -> stringResource(R.string.reach) + " ${GameConfig.GAIN_THRESHOLD.toInt()}% " + stringResource(R.string.get_gloubi_grow)
                                 },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             if (autoActive) {
                                 Text(
-                                    stringResource(R.string.auto_feed_active) + " " + autoLabel,
+                                    stringResource(R.string.auto_feed_active) + " $autoLabel",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = GloubiOrange
                                 )
@@ -365,9 +365,9 @@ fun GameScreen(
                             else                  -> stringResource(R.string.boost_feed)
                         },
                         sub = when {
-                            freeBoostAvailable -> (GameConfig.BOOST_MS/1000/60).toString() + " min · " + stringResource(R.string.free)
-                            boosted            -> stringResource(R.string.add) + (GameConfig.BOOST_MS/1000/60).toString() + " min · $adsLeft " + stringResource(R.string.left)
-                            adsLeft > 0 && adReady -> (GameConfig.BOOST_MS/1000/60).toString() + " min · $adsLeft " + stringResource(R.string.left)
+                            freeBoostAvailable -> "${(GameConfig.BOOST_MS/1000/60)} min · " + stringResource(R.string.free)
+                            boosted            -> stringResource(R.string.add) + "${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
+                            adsLeft > 0 && adReady -> "${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
                             else               -> null
                         },
                         modifier = half,
@@ -381,8 +381,8 @@ fun GameScreen(
                         icon = { Icon(Icons.Rounded.RiceBowl, null, Modifier.size(22.dp), tint = Color.White) },
                         label = if (freeBigFeedAvailable || adReady) stringResource(R.string.big_feed) else stringResource(R.string.loading),
                         sub = when {
-                            freeBigFeedAvailable -> "+" + GameConfig.FEED_BIG.toString() + "% · " + stringResource(R.string.free)
-                            adReady              -> "+" + GameConfig.FEED_BIG.toString() + "%"
+                            freeBigFeedAvailable -> "+${GameConfig.FEED_BIG}% · " + stringResource(R.string.free)
+                            adReady              -> "+${GameConfig.FEED_BIG}%"
                             else                 -> null
                         },
                         modifier = half,
@@ -395,9 +395,9 @@ fun GameScreen(
                         icon = { Icon(Icons.Rounded.AutoMode, null, Modifier.size(22.dp), tint = Color.White) },
                         label = if (autoActive) "Auto $autoLabel" else "Auto OFF",
                         sub = when {
-                            freeAutoFeedAvailable  -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min · " + stringResource(R.string.free)
-                            autoActive             -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min · " + stringResource(R.string.ceiling) + " " + autoCapLabel
-                            adReady                -> "+" + (GameConfig.AUTO_FEED_REWARD_MS/1000/60).toString() + " min"
+                            freeAutoFeedAvailable  -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min · " + stringResource(R.string.free)
+                            autoActive             -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min · " + stringResource(R.string.ceiling) + " $autoCapLabel"
+                            adReady                -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min"
                             else                   -> null
                         },
                         modifier = half,

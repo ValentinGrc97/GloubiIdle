@@ -24,10 +24,10 @@
 }
 
 # ── Kotlin ────────────────────────────────────────────────────────────────────
--keep class kotlin.** { *; }
 -keep class kotlin.Metadata { *; }
 -keepclassmembers class **$WhenMappings { *; }
 -keepclassmembers class kotlin.Lazy { *; }
+-keepclassmembers class kotlin.collections.** { *; }
 -dontwarn kotlin.**
 
 # Kotlin Coroutines
@@ -38,7 +38,12 @@
 }
 
 # ── Jetpack Compose ───────────────────────────────────────────────────────────
--keep class androidx.compose.** { *; }
+-keepclassmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
+-keepclasseswithmembers class * {
+    @androidx.compose.ui.tooling.preview.Preview <methods>;
+}
 -dontwarn androidx.compose.**
 
 # ── WorkManager ───────────────────────────────────────────────────────────────
@@ -50,7 +55,16 @@
 -keep class com.vgarcia.gloubi.notifications.** { *; }
 
 # ── Google AdMob & UMP ────────────────────────────────────────────────────────
--keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.android.gms.ads.MobileAds { *; }
+-keep class com.google.android.gms.ads.AdRequest { *; }
+-keep class com.google.android.gms.ads.AdView { *; }
+-keep class com.google.android.gms.ads.rewarded.RewardedAd { *; }
+-keep class com.google.android.gms.ads.rewarded.RewardedAdLoadCallback { *; }
+-keep class com.google.android.gms.ads.rewarded.RewardItem { *; }
+-keep class com.google.android.gms.ads.FullScreenContentCallback { *; }
+-keep class com.google.android.gms.ads.LoadAdError { *; }
+-keep class com.google.android.gms.ads.AdError { *; }
+-keep class com.google.android.gms.ads.AdSize { *; }
 -keep class com.google.android.ump.** { *; }
 -dontwarn com.google.android.gms.**
 -dontwarn com.google.android.ump.**
