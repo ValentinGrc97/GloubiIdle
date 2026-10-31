@@ -13,6 +13,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -109,8 +110,10 @@ fun AnimalView(
     val burstAlpha    = remember { Animatable(0f) }
 
     //Animation nourriture + éclats boost
+    val lastFeedTick = remember { mutableIntStateOf(feedTick) }
     LaunchedEffect(feedTick) {
-        if (feedTick > 0) {
+        if (feedTick > lastFeedTick.intValue) {
+            lastFeedTick.intValue = feedTick
             foodAnim.snapTo(0f)
             launch { foodAnim.animateTo(1f, tween(300, easing = LinearEasing)) }
             mouth.animateTo(1f, tween(300))
@@ -132,14 +135,16 @@ fun AnimalView(
     val bigFoodAlpha = remember { Animatable(0f) }
     val bigFoodY    = remember { Animatable(0f) }  // 0 = haut de l'écran, 1 = bouche
 
+    val lastBigFeedTick = remember { mutableIntStateOf(bigFeedTick) }
     LaunchedEffect(bigFeedTick) {
-        if (bigFeedTick > 0) {
-            // Reset : steak en haut, plein opaque, taille 0
+        if (bigFeedTick > lastBigFeedTick.intValue) {
+            lastBigFeedTick.intValue = bigFeedTick
+            // Reset : ration en haut, plein opaque, taille 0
             bigFoodScale.snapTo(0f)
             bigFoodAlpha.snapTo(1f)
             bigFoodY.snapTo(0f)
 
-            // Phase 1 : apparition du steak (grossit)
+            // Phase 1 : apparition de la ration (grossit)
             launch {
                 bigFoodScale.animateTo(1f, tween(200, easing = FastOutSlowInEasing))
             }
@@ -147,12 +152,12 @@ fun AnimalView(
             launch {
                 bigFoodY.animateTo(1f, tween(600, easing = LinearEasing))
             }
-            // Phase 3 : disparition en fondu quand le steak touche la bouche
+            // Phase 3 : disparition en fondu quand la ration touche la bouche
             launch {
-                delay(900.milliseconds)         // attend que le steak soit presque arrivé
+                delay(900.milliseconds)         // attend que la ration soit presque arrivé
                 bigFoodAlpha.animateTo(0f, tween(300))
             }
-            // Phase 4 : Gloubi ouvre grand la bouche à l'arrivée du steak
+            // Phase 4 : Gloubi ouvre grand la bouche à l'arrivée de la ration
             delay(500.milliseconds)
             mouth.animateTo(1f, tween(300))
             mouth.animateTo(0f, tween(300))
@@ -228,7 +233,8 @@ fun AnimalView(
         // Effet skin ghost : contour fantôme
         if (skin == "skin_ghost") {
             drawCircle(Color(0x44FFFFFF), r * 1.02f, Offset(cx, cy),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.06f))
+                style = Stroke(r * 0.06f)
+            )
         }
         // Effet skin fire : halo de flammes
         if (skin == "skin_fire") {
@@ -343,7 +349,8 @@ fun AnimalView(
                     }
                     drawPath(path, Color(0xFF64B5F6))
                     drawPath(path.apply {  }, Color(0xAAFFFFFF),
-                        style = androidx.compose.ui.graphics.drawscope.Stroke(fr * 0.15f))
+                        style = Stroke(fr * 0.15f)
+                    )
                 }
                 "food_cake" -> {
                     // Gâteau : rectangle + triangle

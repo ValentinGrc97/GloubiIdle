@@ -8,8 +8,11 @@ import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -26,11 +29,10 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private val _offlineGain = MutableStateFlow(0.0)
     val offlineGain: StateFlow<Double> = _offlineGain.asStateFlow()
 
-    /** Incrémenté à chaque repas : déclenche l'animation de nourriture/bouche. */
-    private val _feedTick = MutableStateFlow(0)
-    val feedTick: StateFlow<Int> = _feedTick.asStateFlow()
-    private val _bigFeedTick = MutableStateFlow(0)
-    val bigFeedTick: StateFlow<Int> = _bigFeedTick.asStateFlow()
+    private val _feedEvent    = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val feedEvent: SharedFlow<Unit> = _feedEvent.asSharedFlow()
+    private val _bigFeedEvent = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val bigFeedEvent: SharedFlow<Unit> = _bigFeedEvent.asSharedFlow()
     private val _pendingBigFeed = MutableStateFlow(false)
 
     private fun today(now: Long = System.currentTimeMillis()) = now / 86_400_000L
@@ -153,9 +155,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     private fun feed(amount: Double) {
         val p = _player.value
         _player.value = p.copy(satiety = min(100.0, p.satiety + amount))
-        when {
-            amount == GameConfig.FEED_BIG -> _bigFeedTick.value++
-            else -> _feedTick.value++
+        viewModelScope.launch {
+            when {
+                amount == GameConfig.FEED_BIG -> _bigFeedEvent.emit(Unit)
+                else -> _feedEvent.emit(Unit)
+            }
         }
     }
 

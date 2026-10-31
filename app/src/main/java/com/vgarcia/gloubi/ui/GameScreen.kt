@@ -248,51 +248,6 @@ fun GameScreen(
                 verticalArrangement = Arrangement.spacedBy(14.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Header
-                Row(
-                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        stringResource(R.string.app_name),
-                        style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White,
-                        modifier = Modifier.padding(start = 8.dp)
-                    )
-                    androidx.compose.material3.IconButton(onClick = onSettings) {
-                        Icon(
-                            Icons.Rounded.Settings,
-                            contentDescription = stringResource(R.string.settings),
-                            tint = Color.White.copy(alpha = 0.8f),
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-                }
-
-                Box(
-                    Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow)))
-                        .padding(horizontal = 4.dp, vertical = 4.dp)
-                ) {
-                    Button(onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                player.coins.toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.White
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Icon(
-                                Icons.Rounded.ShoppingCart,
-                                contentDescription = stringResource(R.string.shop_title),
-                                tint = Color.White.copy(alpha = 0.8f),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-                }
 
                 // Bannière hors-ligne
                 AnimatedVisibility(
@@ -466,6 +421,51 @@ fun GameScreen(
             }
 
             BannerAdView()
+        }
+
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 24.dp)) {
+            // Header
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = Color.White,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+                androidx.compose.material3.IconButton(onClick = onSettings) {
+                    Icon(
+                        Icons.Rounded.Settings,
+                        contentDescription = stringResource(R.string.settings),
+                        tint = Color.White.copy(alpha = 0.8f),
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp)) {
+                Spacer(Modifier.weight(1f))
+                Button(modifier = Modifier.clip(RoundedCornerShape(20.dp))
+                    .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow)))
+                    .padding(horizontal = 2.dp, vertical = 2.dp), onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            player.coins.toString(),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Color.White
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Icon(
+                            Icons.Rounded.ShoppingCart,
+                            contentDescription = stringResource(R.string.shop_title),
+                            tint = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

@@ -14,6 +14,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import com.vgarcia.gloubi.ads.RewardedAdManager
 import com.vgarcia.gloubi.ui.GameScreen
@@ -29,6 +30,7 @@ import androidx.core.content.edit
 import com.vgarcia.gloubi.ui.SettingsScreen
 import com.vgarcia.gloubi.ui.ShopScreen
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -63,8 +65,8 @@ class MainActivity : ComponentActivity() {
                 val autoReady   by adManagerAuto.isReady.collectAsState()
                 // adReady = true si au moins un manager est prêt (pour l'affichage général)
                 val adReady = boostReady || bigReady || autoReady
-                val feedTick    by gameVm.feedTick.collectAsState()
-                val bigFeedTick by gameVm.bigFeedTick.collectAsState()
+                var feedTick    by remember { mutableIntStateOf(0) }
+                var bigFeedTick by remember { mutableIntStateOf(0) }
                 var now         by remember { mutableLongStateOf(System.currentTimeMillis()) }
                 var showSettings by remember { mutableStateOf(false) }
                 val notifEnabled = remember {
@@ -77,6 +79,10 @@ class MainActivity : ComponentActivity() {
 
                 LaunchedEffect(Unit) {
                     while (true) { now = System.currentTimeMillis(); delay(1000.milliseconds) }
+                }
+                LaunchedEffect(Unit) {
+                    launch { gameVm.feedEvent.collect    { feedTick++ } }
+                    launch { gameVm.bigFeedEvent.collect { bigFeedTick++ } }
                 }
 
                 if (showSettings) {

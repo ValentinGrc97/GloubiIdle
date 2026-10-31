@@ -147,16 +147,16 @@ fun SettingsScreen(
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            title = { stringResource(R.string.reset_progress)},
-            text = { stringResource(R.string.reset_progress_desc) },
+            title = { Text(stringResource(R.string.reset_progress), style = MaterialTheme.typography.labelMedium, color = Color.White) },
+            text = { Text(stringResource(R.string.reset_progress_desc), style = MaterialTheme.typography.labelMedium, color = Color.White) },
             confirmButton = {
                 Button(
                     onClick = { showResetDialog = false; onResetProgress() },
                     colors = ButtonDefaults.buttonColors(containerColor = GloubiRed)
-                ) { stringResource(R.string.reset) }
+                ) { Text(stringResource(R.string.reset), style = MaterialTheme.typography.labelMedium, color = Color.White) }
             },
             dismissButton = {
-                TextButton(onClick = { showResetDialog = false }) { stringResource(R.string.cancel) }
+                TextButton(onClick = { showResetDialog = false }) { Text(stringResource(R.string.cancel), style = MaterialTheme.typography.labelMedium, color = Color.White) }
             },
             containerColor = GloubiSurface
         )
