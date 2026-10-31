@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gloubi</string>
+    <string name="app_name" translatable="false">Gloubi</string>
+
+    <!--Game Screen-->
     <string name="settings">Settings</string>
     <string name="during_offline">🌙 During offline :</string>
     <string name="level">level</string>
@@ -25,6 +27,8 @@
     <string name="ceiling">Ceiling</string>
     <string name="progress">Progress</string>
     <string name="next_level_in">Next level in</string>
+
+    <!--Settings Screen-->
     <string name="reset_progress">Reset progress ?</string>
     <string name="reset_progress_desc">All of your progress, your levels et gains will be definitely deleted. This action is irreversible</string>
     <string name="reset">Reset</string>
@@ -43,4 +47,39 @@
     <string name="delete_level">Delete all your levels and gains</string>
     <string name="about">About</string>
     <string name="version">Version</string>
+
+    <!-- Shop -->
+    <string name="shop_title">Shop</string>
+    <string name="shop_tab_skins" translatable="false">Skins</string>
+    <string name="shop_tab_animations">Animations</string>
+    <string name="shop_tab_foods">Foods</string>
+    <string name="shop_equipped">Equipped</string>
+    <string name="shop_equip">Equip</string>
+    <string name="shop_buy">Buy</string>
+    <string name="shop_confirm_buy">Buy for %1$d Coins ?</string>
+    <string name="shop_confirm_desc">Current balance : %1$d Coins</string>
+    <string name="coins" translatable="false">Coins</string>
+
+    <!-- Skins -->
+    <string name="shop_skin_default" translatable="false">Gloubi</string>
+    <string name="shop_skin_gold">Golden Gloubi</string>
+    <string name="shop_skin_rainbow">Rainbow Gloubi</string>
+    <string name="shop_skin_ghost">Ghost Gloubi</string>
+    <string name="shop_skin_fire">Fire Gloubi</string>
+    <string name="shop_skin_ice">Ice Gloubi</string>
+
+    <!-- Animations -->
+    <string name="shop_anim_default">Rebound</string>
+    <string name="shop_anim_dance">Dance</string>
+    <string name="shop_anim_spin">Spin</string>
+    <string name="shop_anim_shake">Shake</string>
+    <string name="shop_anim_flip">Flip</string>
+
+    <!-- Foods -->
+    <string name="shop_food_kibble">Kibble</string>
+    <string name="shop_food_apple">Apple</string>
+    <string name="shop_food_pizza">Pizza</string>
+    <string name="shop_food_star">Star</string>
+    <string name="shop_food_diamond">Diamond</string>
+    <string name="shop_food_cake">Cake</string>
 </resources>

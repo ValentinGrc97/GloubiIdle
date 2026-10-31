@@ -18,7 +18,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class GameViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val dao = AppDb.get(app).dao()
+    private val playerDao = AppDb.get(app).playerDao()
 
     private val _player = MutableStateFlow(Player())
     val player: StateFlow<Player> = _player.asStateFlow()
@@ -55,8 +55,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     /** Grosse ration gratuite : marque le pending, sera consommé à onResume. */
     fun useFreeBigFeed() {
         val now = System.currentTimeMillis()
-        val p = _player.value
-        _player.value = p.copy(freeBigFeedUsedDay = today(now))
+        _player.value = _player.value.copy(freeBigFeedUsedDay = today(now))
         _pendingBigFeed.value = true
         save()
         consumePendingBigFeed()
@@ -66,15 +65,11 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     fun useFreeAutoFeed() {
         val now = System.currentTimeMillis()
         val p = _player.value
-        val currentUntil = max(now, p.autoFeedUntil)
         val newUntil = min(
-            currentUntil + GameConfig.AUTO_FEED_REWARD_MS,
+            max(now, p.autoFeedUntil) + GameConfig.AUTO_FEED_REWARD_MS,
             now + GameConfig.AUTO_FEED_MAX_MS
         )
-        _player.value = p.copy(
-            autoFeedUntil = newUntil,
-            freeAutoFeedUsedDay = today(now)
-        )
+        _player.value = p.copy(autoFeedUntil = newUntil, freeAutoFeedUsedDay = today(now))
         save()
     }
 
@@ -83,33 +78,26 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     init {
         viewModelScope.launch {
             val now = System.currentTimeMillis()
-            val saved = dao.get() ?: Player(lastSeen = now)
-            var p = if (saved.adsDay != today(now))
-                saved.copy(adsToday = 0, adsDay = today(now)) else saved
+            val saved = playerDao.get() ?: Player(lastSeen = now)
+            var p = if (saved.adsDay != today(now)) saved.copy(adsToday = 0, adsDay = today(now)) else saved
 
             // Hors-ligne : la faim baisse, et les gains ne courent que tant que l'animal reste >= 95 %
             val elapsedMs = (now - saved.lastSeen).coerceIn(0L, GameConfig.MAX_OFFLINE_MS)
-
             // Faim hors-ligne : auto-nourrissage actif seulement tant qu'autoFeedUntil n'est pas dépassé
             val autoActiveMs = (min(now, saved.autoFeedUntil) - saved.lastSeen).coerceAtLeast(0L)
-            val netDecay = GameConfig.DECAY_PER_SEC * elapsedMs / 1000.0 -
-                    GameConfig.AUTO_FEED_PER_SEC * autoActiveMs / 1000.0
+            val netDecay = GameConfig.DECAY_PER_SEC * elapsedMs / 1000.0 - GameConfig.AUTO_FEED_PER_SEC * autoActiveMs / 1000.0
             val satiety = (saved.satiety - netDecay).coerceIn(0.0, 100.0)
-
             val aboveMs = if (saved.satiety >= GameConfig.GAIN_THRESHOLD)
-                min(
-                    elapsedMs.toDouble(),
-                    (saved.satiety - GameConfig.GAIN_THRESHOLD) / GameConfig.DECAY_PER_SEC * 1000.0
-                ).toLong()
+                min(elapsedMs.toDouble(),
+                    (saved.satiety - GameConfig.GAIN_THRESHOLD) / GameConfig.DECAY_PER_SEC * 1000.0).toLong()
             else 0L
-            val boostedMs = (min(saved.lastSeen + aboveMs, saved.boostUntil) - saved.lastSeen)
-                .coerceIn(0L, aboveMs)
+            val boostedMs = (min(saved.lastSeen + aboveMs, saved.boostUntil) - saved.lastSeen).coerceIn(0L, aboveMs)
             val gain = GameConfig.BASE_RATE * (aboveMs + boostedMs) / 1000.0
 
-            p = p.copy(satiety = satiety, progress = p.progress + gain, lastSeen = now)
+            p = p.copy(satiety = satiety, progress = p.progress + gain, coins = p.coins + gain.toInt(), lastSeen = now)
             _offlineGain.value = gain
             _player.value = p
-            dao.save(p)
+            playerDao.save(p)
 
             var ticks = 0
             while (true) {
@@ -129,26 +117,35 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val gain = if (earning) GameConfig.BASE_RATE else 0.0
         val autoAdd = if (p.autoFeedUntil > now) GameConfig.AUTO_FEED_PER_SEC else 0.0
         _player.value = p.copy(
-            satiety = (p.satiety - GameConfig.DECAY_PER_SEC / GameConfig.RATIO + autoAdd)
-                .coerceIn(0.0, 100.0),
+            satiety  = (p.satiety - GameConfig.DECAY_PER_SEC / GameConfig.RATIO + autoAdd).coerceIn(0.0, 100.0),
             progress = p.progress + gain,
+            coins    = p.coins + gain.toInt(),        // 1 XP = 1 coin
             lastSeen = now,
             adsToday = if (p.adsDay != today(now)) 0 else p.adsToday,
-            adsDay = today(now)
+            adsDay   = today(now)
         )
+    }
+
+    // ── Coins (appelé par ShopViewModel lors d'un achat) ─────────────────────
+
+    fun spendCoins(amount: Int) {
+        val p = _player.value
+        if (p.coins < amount) return
+        _player.value = p.copy(coins = p.coins - amount)
+        save()
     }
 
     // ── Persistence ──────────────────────────────────────────────────────────
 
     fun save() {
-        viewModelScope.launch(Dispatchers.IO) { dao.save(_player.value) }
+        viewModelScope.launch(Dispatchers.IO) { playerDao.save(_player.value) }
     }
 
     fun saveOnPause() {
         val now = System.currentTimeMillis()
         val updated = _player.value.copy(lastSeen = now)
         _player.value = updated
-        viewModelScope.launch(Dispatchers.IO) { dao.save(updated) }
+        viewModelScope.launch(Dispatchers.IO) { playerDao.save(updated) }
     }
 
     // ── Alimentation ─────────────────────────────────────────────────────────
@@ -186,17 +183,14 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     /** Appelé quand AdMob confirme la récompense pour la grosse ration. */
-    fun onBigFeedAdRewarded() {
-        _pendingBigFeed.value = true  // on marque, on ne feed pas encore
-    }
+    fun onBigFeedAdRewarded()  { _pendingBigFeed.value = true } // on marque, on ne feed pas encore
 
     /** Appelé quand AdMob confirme la récompense pour l'auto-nourrissage. */
     fun onAutoFeedRewarded() {
         val now = System.currentTimeMillis()
-        val p = _player.value
-        val currentUntil = max(now, p.autoFeedUntil)
+        val p   = _player.value
         val newUntil = min(
-            currentUntil + GameConfig.AUTO_FEED_REWARD_MS,
+            max(now, p.autoFeedUntil) + GameConfig.AUTO_FEED_REWARD_MS,
             now + GameConfig.AUTO_FEED_MAX_MS
         )
         _player.value = p.copy(autoFeedUntil = newUntil)
@@ -204,10 +198,7 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun consumePendingBigFeed() {
-        if (_pendingBigFeed.value) {
-            _pendingBigFeed.value = false
-            feedBig()
-        }
+        if (_pendingBigFeed.value) { _pendingBigFeed.value = false; feedBig() }
     }
 
     fun dismissOfflineGain() { _offlineGain.value = 0.0 }
@@ -217,6 +208,6 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
         val fresh = Player(lastSeen = now)
         _player.value = fresh
         _offlineGain.value = 0.0
-        viewModelScope.launch(Dispatchers.IO) { dao.save(fresh) }
+        viewModelScope.launch(Dispatchers.IO) { playerDao.save(fresh) }
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gloubi</string>
+
     <string name="settings">Einstellungen</string>
     <string name="during_offline">🌙 Während der Abwesenheit :</string>
     <string name="level">Stufe</string>
@@ -43,4 +43,29 @@
     <string name="delete_level">Alle deine Stufen und Gewinne löschen</string>
     <string name="about">Über die App</string>
     <string name="version">Version</string>
+    <string name="shop_title">Geschäft</string>
+
+    <string name="shop_tab_animations">Animationen</string>
+    <string name="shop_tab_foods">Lebensmittel</string>
+    <string name="shop_equipped">Ausgestattet</string>
+    <string name="shop_equip">Ausstatten</string>
+    <string name="shop_buy">Kaufen</string>
+    <string name="shop_confirm_buy">Für %1$d Coins kaufen?</string>
+    <string name="shop_confirm_desc">Aktueller Saldo : %1$d Coins</string>
+    <string name="shop_skin_gold">Goldener Gloubi</string>
+    <string name="shop_skin_rainbow">Regenbogen-Gloubi</string>
+    <string name="shop_skin_ghost">Geister-Gloubi</string>
+    <string name="shop_skin_fire">Feuer-Gloubi</string>
+    <string name="shop_skin_ice">Eis-Gloubi</string>
+    <string name="shop_anim_default">Rebound</string>
+    <string name="shop_anim_dance">Tanzen</string>
+    <string name="shop_anim_spin">Drehen</string>
+    <string name="shop_anim_shake">Shake</string>
+    <string name="shop_anim_flip">Umklappen</string>
+    <string name="shop_food_kibble">Trockenfutter</string>
+    <string name="shop_food_apple">Apfel</string>
+    <string name="shop_food_pizza">Pizza</string>
+    <string name="shop_food_star">Stern</string>
+    <string name="shop_food_diamond">Diamant</string>
+    <string name="shop_food_cake">Kuchen</string>
 </resources>

@@ -30,7 +30,7 @@ class HungerNotificationWorker(
     }
 
     override suspend fun doWork(): Result {
-        val player = AppDb.get(ctx).dao().get() ?: return Result.success()
+        val player = AppDb.get(ctx).playerDao().get() ?: return Result.success()
         val now = System.currentTimeMillis()
 
         // Calcule la faim actuelle (elle a baissé depuis lastSeen)

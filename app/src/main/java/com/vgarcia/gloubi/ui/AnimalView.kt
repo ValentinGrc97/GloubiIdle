@@ -39,7 +39,17 @@ import kotlin.time.Duration.Companion.milliseconds
  * Ouvre la bouche et attrape une croquette à chaque repas
  */
 @Composable
-fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, bigFeedTick: Int, boosted: Boolean = false, level: Int) {
+fun AnimalView(
+    modifier: Modifier = Modifier,
+    satiety: Float,
+    feedTick: Int,
+    bigFeedTick: Int,
+    boosted: Boolean = false,
+    level: Int,
+    skin: String = "skin_default",
+    anim: String = "anim_default",
+    food: String = "food_kibble"
+) {
     val happy = satiety >= 99f
     val sad = satiety < 20f
 
@@ -92,7 +102,7 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
     }
 
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
-    val food = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
+    val foodAnim = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
 
     // Éclats boost
     val burstProgress = remember { Animatable(0f) }
@@ -101,8 +111,8 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
     //Animation nourriture + éclats boost
     LaunchedEffect(feedTick) {
         if (feedTick > 0) {
-            food.snapTo(0f)
-            launch { food.animateTo(1f, tween(300, easing = LinearEasing)) }
+            foodAnim.snapTo(0f)
+            launch { foodAnim.animateTo(1f, tween(300, easing = LinearEasing)) }
             mouth.animateTo(1f, tween(300))
             if (boosted) {
                 burstProgress.snapTo(0f)
@@ -156,44 +166,97 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
         val cx = w / 2f
         val r = w * variableByLevel * breathe //taille
         val ground = h * 0.58f + w * variableByLevel
-        val bounce = if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
+        // Animation selon animId
+        val bounce = when (anim) {
+            "anim_dance"  -> if (happy || satiety > 50f) abs(sin(hop * 2 * PI)).toFloat() * h * 0.07f else 0f
+            "anim_spin"   -> 0f  // la rotation est gérée séparément
+            "anim_shake"  -> if (feedTick % 2 == 0) h * 0.008f else -h * 0.008f
+            "anim_flip"   -> abs(sin(hop * PI)).toFloat() * h * 0.12f
+            else          -> if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
+        }
         val cy = h * 0.58f - bounce
+        // Spin : oscillation latérale
+        val cxAnim = if (anim == "anim_spin") cx + sin(hop * 2 * PI).toFloat() * r * 0.3f else cx
         val dark = Color(0xFF2B2B3A)
+
+        // Couleur de base selon le skin
+        val skinBase = when (skin) {
+            "skin_gold"    -> Triple(Color(0xFFFFD54F), Color(0xFFFFF176), Color(0xFFFFC107))
+            "skin_rainbow" -> Triple(Color(0xFFFF80AB), Color(0xFFEA80FC), Color(0xFF82B1FF))
+            "skin_ghost"   -> Triple(Color(0xFFECEFF1), Color(0xFFFFFFFF), Color(0xFFB0BEC5))
+            "skin_fire"    -> Triple(Color(0xFFFF6D00), Color(0xFFFFAB40), Color(0xFFDD2C00))
+            "skin_ice"     -> Triple(Color(0xFF80DEEA), Color(0xFFE0F7FA), Color(0xFF00BCD4))
+            else           -> Triple(Color(0xFF8FD3F4), Color(0xFF7BDFA0), Color(0xFF9AA5B1))
+        }
+        val (bodyNormal, bodyHappy, bodySad) = skinBase
+
         val body = when {
-            happy -> Color(0xFF7BDFA0)
-            sad -> Color(0xFF9AA5B1)
-            else -> Color(0xFF8FD3F4)
+            happy -> bodyHappy
+            sad   -> bodySad
+            else  -> bodyNormal
+        }
+
+        // Couleur des oreilles intérieures selon le skin
+        val earInner = when (skin) {
+            "skin_gold"    -> Color(0xFFFFECB3)
+            "skin_ghost"   -> Color(0xFFCFD8DC)
+            "skin_fire"    -> Color(0xFFFFCC02)
+            "skin_ice"     -> Color(0xFFB2EBF2)
+            "skin_rainbow" -> Color(0xFFF48FB1)
+            else           -> Color(0xFFFFC1CC)
         }
         val stroke = r * 0.06f
 
         // ombre
-        drawOval(Color(0x22000000), Offset(cx - r * 0.8f, ground - r * 0.06f), Size(r * 1.6f, r * 0.14f))
+        drawOval(Color(0x22000000), Offset(cxAnim - r * 0.8f, ground - r * 0.06f), Size(r * 1.6f, r * 0.14f))
 
         // oreilles
         for (side in listOf(-1f, 1f)) {
-            drawCircle(body, r * 0.28f, Offset(cx + side * r * 0.70f, cy - r * 0.85f))
-            drawCircle(Color(0xFFFFC1CC), r * 0.14f, Offset(cx + side * r * 0.70f, cy - r * 0.85f))
+            drawCircle(body, r * 0.28f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
+            drawCircle(earInner, r * 0.14f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
         }
 
         // pieds
         for (side in listOf(-1f, 1f)) {
-            drawCircle(body, r * 0.22f, Offset(cx + side * r * 0.45f, cy + r * 0.95f))
+            drawCircle(body, r * 0.22f, Offset(cxAnim + side * r * 0.45f, cy + r * 0.95f))
         }
 
         // corps + ventre
-        drawCircle(body, r, Offset(cx, cy))
-        drawOval(Color(0x33FFFFFF), Offset(cx - r * 0.55f, cy + r * 0.05f), Size(r * 1.1f, r * 0.85f))
+        drawCircle(body, r, Offset(cxAnim, cy))
+        drawOval(Color(0x33FFFFFF), Offset(cxAnim - r * 0.55f, cy + r * 0.05f), Size(r * 1.1f, r * 0.85f))
+
+        // Effet skin ghost : contour fantôme
+        if (skin == "skin_ghost") {
+            drawCircle(Color(0x44FFFFFF), r * 1.02f, Offset(cx, cy),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.06f))
+        }
+        // Effet skin fire : halo de flammes
+        if (skin == "skin_fire") {
+            for (i in 0 until 6) {
+                val a = (i.toFloat() / 6f) * 2f * PI.toFloat()
+                drawCircle(Color(0x55FF6D00), r * 0.22f,
+                    Offset(cx + cos(a) * r * 1.1f, cy + sin(a) * r * 1.1f))
+            }
+        }
+        // Effet skin ice : cristaux
+        if (skin == "skin_ice") {
+            for (i in 0 until 4) {
+                val a = (i.toFloat() / 4f) * 2f * PI.toFloat()
+                drawCircle(Color(0x8880DEEA), r * 0.14f,
+                    Offset(cx + cos(a) * r * 1.25f, cy + sin(a) * r * 1.1f))
+            }
+        }
 
         // joues
         for (side in listOf(-1f, 1f)) {
-            drawCircle(Color(0x66FF8FA3), r * 0.13f, Offset(cx + side * r * 0.62f, cy + r * 0.22f))
+            drawCircle(Color(0x66FF8FA3), r * 0.13f, Offset(cxAnim + side * r * 0.62f, cy + r * 0.22f))
         }
 
         // yeux
         val eyeR = r * 0.17f
         val eyeY = cy - r * 0.15f
         for (side in listOf(-1f, 1f)) {
-            val ex = cx + side * r * 0.38f
+            val ex = cxAnim + side * r * 0.38f
             drawOval(Color.White, Offset(ex - eyeR, eyeY - eyeR * blink), Size(eyeR * 2f, eyeR * 2f * blink))
             if (blink > 0.3f) {
                 drawCircle(dark, eyeR * 0.55f, Offset(ex, eyeY + if (sad) eyeR * 0.25f else 0f))
@@ -201,11 +264,11 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
             }
         }
         if (sad) {
-            drawCircle(Color(0xFF6EC1FF), r * 0.06f, Offset(cx + r * 0.50f, eyeY + eyeR * 1.7f))
+            drawCircle(Color(0xFF6EC1FF), r * 0.06f, Offset(cxAnim + r * 0.50f, eyeY + eyeR * 1.7f))
         }
 
         // bouche
-        val mx = cx
+        val mx = cxAnim
         val mouthCy = cy + r * 0.40f  // centre visuel commun
 
         when {
@@ -242,13 +305,68 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
             }
         }
 
-        // croquette qui tombe vers la bouche
-        if (food.value < 1f) {
+        // Nourriture qui tombe vers la bouche
+        if (foodAnim.value < 1f) {
             val byStart = h * 0.02f          // légèrement hors canvas en haut
-            val byEnd   = cy + r * 0.40f    // mouthCy : centre visuel de la bouche
-            val fy = byStart + (byEnd - byStart) * food.value
-            drawCircle(Color(0xFFD08A4E), r * 0.10f, Offset(cx, fy))
-            drawCircle(Color(0xFF9C5F2C), r * 0.04f, Offset(cx + r * 0.03f, fy - r * 0.02f))
+            val byEnd   = cy + r * 0.40f     // mouthCy : centre visuel de la bouche
+            val fy = byStart + (byEnd - byStart) * foodAnim.value
+            val fr = r * 0.10f
+            when (food) {
+                "food_pizza" -> {
+                    // Triangle pizza
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(cx, fy - fr)
+                        lineTo(cx + fr, fy + fr * 0.8f)
+                        lineTo(cx - fr, fy + fr * 0.8f)
+                        close()
+                    }
+                    drawPath(path, Color(0xFFFDD835))
+                    drawCircle(Color(0xFFEF5350), fr * 0.35f, Offset(cx, fy + fr * 0.1f))
+                }
+                "food_star" -> {
+                    // Étoile dorée (5 cercles)
+                    drawCircle(Color(0xFFFFD740), fr, Offset(cx, fy))
+                    for (i in 0 until 5) {
+                        val a = (i * 72f - 90f) * PI.toFloat() / 180f
+                        drawCircle(Color(0xFFFFF176), fr * 0.4f,
+                            Offset(cx + cos(a) * fr * 0.85f, fy + sin(a) * fr * 0.85f))
+                    }
+                }
+                "food_diamond" -> {
+                    // Losange bleu
+                    val path = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(cx, fy - fr * 1.2f)
+                        lineTo(cx + fr * 0.8f, fy)
+                        lineTo(cx, fy + fr * 1.2f)
+                        lineTo(cx - fr * 0.8f, fy)
+                        close()
+                    }
+                    drawPath(path, Color(0xFF64B5F6))
+                    drawPath(path.apply {  }, Color(0xAAFFFFFF),
+                        style = androidx.compose.ui.graphics.drawscope.Stroke(fr * 0.15f))
+                }
+                "food_cake" -> {
+                    // Gâteau : rectangle + triangle
+                    drawRoundRect(Color(0xFFF48FB1),
+                        Offset(cx - fr * 0.9f, fy - fr * 0.5f), Size(fr * 1.8f, fr * 1.2f),
+                        androidx.compose.ui.geometry.CornerRadius(fr * 0.2f))
+                    drawCircle(Color(0xFFFCE4EC), fr * 0.3f, Offset(cx, fy - fr * 0.9f))
+                }
+                "food_apple" -> {
+                    // Pomme rouge (déjà connue)
+                    drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx - fr * 0.18f, fy))
+                    drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx + fr * 0.18f, fy))
+                    drawCircle(Color(0xAAFF7B6B), fr * 0.3f, Offset(cx - fr * 0.22f, fy - fr * 0.38f))
+                    drawLine(Color(0xFF5C3A1E),
+                        Offset(cx + fr * 0.08f, fy - fr * 0.75f),
+                        Offset(cx + fr * 0.08f, fy - fr * 1.1f), fr * 0.12f)
+                }
+                else -> {
+                    // Croquette par défaut
+                    drawCircle(Color(0xFFD08A4E), fr, Offset(cx, fy))
+                    drawCircle(Color(0xFF9C5F2C), fr * 0.4f, Offset(cx + fr * 0.3f, fy - fr * 0.2f))
+                }
+            }
         }
 
         // Grosse ration (pomme)
@@ -257,7 +375,7 @@ fun AnimalView(modifier: Modifier = Modifier, satiety: Float, feedTick: Int, big
             val byStart = -r * 0.5f          // légèrement hors canvas en haut
             val byEnd   = cy + r * 0.40f    // mouthCy : centre visuel de la bouche
             val by = byStart + (byEnd - byStart) * bigFoodY.value
-            val bs = r * 0.2f * bigFoodScale.value //dimension de la grosse ration
+            val bs = r * 0.3f * bigFoodScale.value //dimension de la grosse ration
             val alpha = bigFoodAlpha.value
 
             // Corps gauche de la pomme (lobe gauche légèrement décalé)

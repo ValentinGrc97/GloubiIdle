@@ -27,11 +27,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 import androidx.core.content.edit
 import com.vgarcia.gloubi.ui.SettingsScreen
+import com.vgarcia.gloubi.ui.ShopScreen
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
 
 class MainActivity : ComponentActivity() {
 
-    private val vm: GameViewModel by viewModels()
+    private val gameVm: GameViewModel by viewModels()
+    val shopVm: ShopViewModel by viewModels()
 
     // Trois managers distincts : boost, grosse ration, auto-nourrissage
     private lateinit var adManagerBoost:   RewardedAdManager
@@ -54,15 +56,15 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             GloubiTheme {
-                val player      by vm.player.collectAsState()
-                val offline     by vm.offlineGain.collectAsState()
+                val player      by gameVm.player.collectAsState()
+                val offline     by gameVm.offlineGain.collectAsState()
                 val boostReady  by adManagerBoost.isReady.collectAsState()
                 val bigReady    by adManagerBigFeed.isReady.collectAsState()
                 val autoReady   by adManagerAuto.isReady.collectAsState()
                 // adReady = true si au moins un manager est prêt (pour l'affichage général)
                 val adReady = boostReady || bigReady || autoReady
-                val feedTick    by vm.feedTick.collectAsState()
-                val bigFeedTick by vm.bigFeedTick.collectAsState()
+                val feedTick    by gameVm.feedTick.collectAsState()
+                val bigFeedTick by gameVm.bigFeedTick.collectAsState()
                 var now         by remember { mutableLongStateOf(System.currentTimeMillis()) }
                 var showSettings by remember { mutableStateOf(false) }
                 val notifEnabled = remember {
@@ -70,6 +72,8 @@ class MainActivity : ComponentActivity() {
                         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
                     )
                 }
+                val shopItems by shopVm.items.collectAsState()
+                var showShop by remember { mutableStateOf(false) }
 
                 LaunchedEffect(Unit) {
                     while (true) { now = System.currentTimeMillis(); delay(1000.milliseconds) }
@@ -90,10 +94,19 @@ class MainActivity : ComponentActivity() {
                             UserMessagingPlatform.showPrivacyOptionsForm(this) {}
                         },
                         onResetProgress = {
-                            vm.resetProgress()
+                            gameVm.resetProgress()
+                            shopVm.resetShop()
                             showSettings = false
                         },
                         onBack = { showSettings = false }
+                    )
+                } else if (showShop) {
+                    ShopScreen(
+                        items  = shopItems,
+                        coins  = player.coins,
+                        onBuy  = { item -> shopVm.buy(item, player.coins) { gameVm.spendCoins(it) } },
+                        onEquip = shopVm::equip,
+                        onBack = { showShop = false }
                     )
                 } else {
                     GameScreen(
@@ -104,32 +117,36 @@ class MainActivity : ComponentActivity() {
                         feedTick = feedTick,
                         bigFeedTick = bigFeedTick,
                         onFeed = {
-                            if (vm.boosted()) vm.feedBoost() else vm.feedSmall()
+                            if (gameVm.boosted()) gameVm.feedBoost() else gameVm.feedSmall()
                         },
                         onWatchBoostAd = {
                             when {
-                                vm.canUseFreeBoost() -> vm.useFreeBoost()
-                                vm.canWatchAd() && boostReady ->
-                                    adManagerBoost.show(this) { vm.onBoostAdRewarded() }
+                                gameVm.canUseFreeBoost() -> gameVm.useFreeBoost()
+                                gameVm.canWatchAd() && boostReady ->
+                                    adManagerBoost.show(this) { gameVm.onBoostAdRewarded() }
                             }
                         },
                         onFeedBig = {
                             when {
-                                vm.canUseFreeBigFeed() -> vm.useFreeBigFeed()
-                                bigReady -> adManagerBigFeed.show(this) { vm.onBigFeedAdRewarded() }
+                                gameVm.canUseFreeBigFeed() -> gameVm.useFreeBigFeed()
+                                bigReady -> adManagerBigFeed.show(this) { gameVm.onBigFeedAdRewarded() }
                             }
                         },
                         onToggleAutoFeed = {
                             when {
-                                vm.canUseFreeAutoFeed() -> vm.useFreeAutoFeed()
-                                autoReady -> adManagerAuto.show(this) { vm.onAutoFeedRewarded() }
+                                gameVm.canUseFreeAutoFeed() -> gameVm.useFreeAutoFeed()
+                                autoReady -> adManagerAuto.show(this) { gameVm.onAutoFeedRewarded() }
                             }
                         },
-                        onDismissOffline = vm::dismissOfflineGain,
+                        onDismissOffline = gameVm::dismissOfflineGain,
                         onSettings = { showSettings = true },
-                        freeBoostAvailable    = vm.canUseFreeBoost(),
-                        freeBigFeedAvailable  = vm.canUseFreeBigFeed(),
-                        freeAutoFeedAvailable = vm.canUseFreeAutoFeed()
+                        onShop = { showShop = true },
+                        equippedSkin = shopVm.equippedSkin(),
+                        equippedAnim = shopVm.equippedAnim(),
+                        equippedFood = shopVm.equippedFood(),
+                        freeBoostAvailable    = gameVm.canUseFreeBoost(),
+                        freeBigFeedAvailable  = gameVm.canUseFreeBigFeed(),
+                        freeAutoFeedAvailable = gameVm.canUseFreeAutoFeed()
                     )
                 }
             }
@@ -143,7 +160,7 @@ class MainActivity : ComponentActivity() {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
                 requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
         }
-        vm.consumePendingBigFeed()
+        gameVm.consumePendingBigFeed()
         getSharedPreferences(HungerNotificationWorker.PREFS_NAME, MODE_PRIVATE).edit {
             putBoolean(HungerNotificationWorker.KEY_THRESHOLD_PENDING, false)
             putBoolean(HungerNotificationWorker.KEY_EMPTY_PENDING, false)
@@ -179,6 +196,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        vm.saveOnPause()
+        gameVm.saveOnPause()
     }
 }

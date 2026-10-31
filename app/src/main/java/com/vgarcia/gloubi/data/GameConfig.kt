@@ -26,15 +26,15 @@ object GameConfig {
 
     /** XP totale cumulée nécessaire pour atteindre [level]. */
     fun xpRequiredForLevel(level: Int): Double {
-        if (level <= 1) return 0.0
-        // Somme géométrique : XP_BASE * (2^level - 1)
+        if (level <= 0) return 0.0
+        // Somme géométrique : XP_BASE * (XP_MULTIPLIER^level - 1) / (XP_MULTIPLIER - 1)
         return XP_BASE * (XP_MULTIPLIER.pow(level) - 1.0) / (XP_MULTIPLIER - 1.0)
     }
 
-    /** Niveau actuel à partir de la progression cumulée. */
+    /** Nombre de niveaux complètement franchi. */
     fun levelFromProgress(progress: Double): Int {
-        var level = 1
-        while (progress >= xpRequiredForLevel(level + 1)) level++
+        var level = 0
+        while (progress > xpRequiredForLevel(level + 1)) level++
         return level
     }
 

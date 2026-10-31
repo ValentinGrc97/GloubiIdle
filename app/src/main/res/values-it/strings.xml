@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Gloubi</string>
+
     <string name="settings">Impostazioni</string>
     <string name="during_offline">🌙 Durante l\'assenza :</string>
     <string name="level">livello</string>
@@ -43,4 +43,29 @@
     <string name="delete_level">Elimina tutti i tuoi livelli e guadagni</string>
     <string name="about">Informazioni</string>
     <string name="version">Versione</string>
+    <string name="shop_title">Negozio</string>
+
+    <string name="shop_tab_animations">Animazioni</string>
+    <string name="shop_tab_foods">Alimenti</string>
+    <string name="shop_equipped">Equipaggiato</string>
+    <string name="shop_equip">Equipaggiare</string>
+    <string name="shop_buy">Acquistare</string>
+    <string name="shop_confirm_buy">Acquistare per %1$d Coins ?</string>
+    <string name="shop_confirm_desc">Saldo attuale: %1$d Coins</string>
+    <string name="shop_skin_gold">Gloubi Dorato</string>
+    <string name="shop_skin_rainbow">Gloubi Arcobaleno</string>
+    <string name="shop_skin_ghost">Fantasma Gloubi</string>
+    <string name="shop_skin_fire">Fuoco Gloubi</string>
+    <string name="shop_skin_ice">Ghiaccio Gloubi</string>
+    <string name="shop_anim_default">Rimbalzo</string>
+    <string name="shop_anim_dance">Ballare</string>
+    <string name="shop_anim_spin">Rotazione</string>
+    <string name="shop_anim_shake">Scuotere</string>
+    <string name="shop_anim_flip">Capovolgi</string>
+    <string name="shop_food_kibble">Croccantini</string>
+    <string name="shop_food_apple">Mela</string>
+    <string name="shop_food_pizza">Pizza</string>
+    <string name="shop_food_star">Stella</string>
+    <string name="shop_food_diamond">Diamante</string>
+    <string name="shop_food_cake">Torta</string>
 </resources>

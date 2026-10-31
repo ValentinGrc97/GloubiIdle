@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Gloubi</string>
+
 
     <!--Game Screen-->
     <string name="settings">Paramètres</string>
@@ -46,4 +46,39 @@
     <string name="delete_level">Supprimer tous vos niveaux et gains</string>
     <string name="about">À propos</string>
     <string name="version">Version</string>
+
+    <!-- Shop -->
+    <string name="shop_title">Boutique</string>
+
+    <string name="shop_tab_animations">Animations</string>
+    <string name="shop_tab_foods">Nourritures</string>
+    <string name="shop_equipped">Équipé</string>
+    <string name="shop_equip">Équiper</string>
+    <string name="shop_buy">Acheter</string>
+    <string name="shop_confirm_buy">Acheter pour %1$d Coins ?</string>
+    <string name="shop_confirm_desc">Solde actuel : %1$d Coins</string>
+
+
+    <!-- Skins -->
+
+    <string name="shop_skin_gold">Gloubi Doré</string>
+    <string name="shop_skin_rainbow">Gloubi Arc-en-ciel</string>
+    <string name="shop_skin_ghost">Gloubi Fantôme</string>
+    <string name="shop_skin_fire">Gloubi de Feu</string>
+    <string name="shop_skin_ice">Gloubi de Glace</string>
+
+    <!-- Animations -->
+    <string name="shop_anim_default">Rebond</string>
+    <string name="shop_anim_dance">Danse</string>
+    <string name="shop_anim_spin">Rotation</string>
+    <string name="shop_anim_shake">Tremblement</string>
+    <string name="shop_anim_flip">Flip</string>
+
+    <!-- Foods -->
+    <string name="shop_food_kibble">Croquette</string>
+    <string name="shop_food_apple">Pomme</string>
+    <string name="shop_food_pizza">Pizza</string>
+    <string name="shop_food_star">Étoile</string>
+    <string name="shop_food_diamond">Diamant</string>
+    <string name="shop_food_cake">Gâteau</string>
 </resources>

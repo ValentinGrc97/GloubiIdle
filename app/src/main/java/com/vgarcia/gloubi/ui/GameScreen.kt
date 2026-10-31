@@ -32,6 +32,7 @@ import androidx.compose.material.icons.rounded.Egg
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.RiceBowl
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.ShoppingCart
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -194,6 +195,10 @@ fun GameScreen(
     onToggleAutoFeed: () -> Unit,
     onDismissOffline: () -> Unit,
     onSettings: () -> Unit,
+    onShop: () -> Unit,
+    equippedSkin: String,
+    equippedAnim: String,
+    equippedFood: String,
     freeBoostAvailable: Boolean = false,
     freeBigFeedAvailable: Boolean = false,
     freeAutoFeedAvailable: Boolean = false
@@ -209,7 +214,7 @@ fun GameScreen(
     val earning    = player.satiety >= GameConfig.GAIN_THRESHOLD
     val critical   = player.satiety < 20.0
     val adsLeft    = GameConfig.MAX_ADS_PER_DAY - player.adsToday
-    val level      = GameConfig.levelFromProgress(player.progress)
+    val level      = GameConfig.levelFromProgress(player.progress)+1
     val (xpInLevel, xpForLevel) = GameConfig.xpInCurrentLevel(player.progress)
 
     // Fond dégradé vertical qui évolue selon l'état de Gloubi
@@ -265,6 +270,30 @@ fun GameScreen(
                     }
                 }
 
+                Box(
+                    Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow)))
+                        .padding(horizontal = 4.dp, vertical = 4.dp)
+                ) {
+                    Button(onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                player.coins.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Icon(
+                                Icons.Rounded.ShoppingCart,
+                                contentDescription = stringResource(R.string.shop_title),
+                                tint = Color.White.copy(alpha = 0.8f),
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
+
                 // Bannière hors-ligne
                 AnimatedVisibility(
                     visible = offlineGain > 0,
@@ -273,7 +302,7 @@ fun GameScreen(
                     GloubiCard(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(16.dp)) {
                             Text(
-                                stringResource(R.string.during_offline) + " +$offlineGain XP",
+                                stringResource(R.string.during_offline) + " +${offlineGain.toInt()} XP",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -289,7 +318,10 @@ fun GameScreen(
                     feedTick = feedTick,
                     bigFeedTick = bigFeedTick,
                     boosted = boosted,
-                    level = level
+                    level = level,
+                    skin = equippedSkin,
+                    anim = equippedAnim,
+                    food = equippedFood
                 )
 
                 // Barre de faim
@@ -357,6 +389,7 @@ fun GameScreen(
                     ActionButton(
                         onClick = onWatchBoostAd,
                         enabled = freeBoostAvailable || (adReady && adsLeft > 0),
+                        active = boosted,
                         icon = { Icon(Icons.Outlined.RocketLaunch, null, Modifier.size(22.dp), tint = Color.White) },
                         label = when {
                             boosted               -> stringResource(R.string.boosted_active)
@@ -366,7 +399,7 @@ fun GameScreen(
                         },
                         sub = when {
                             freeBoostAvailable -> "${(GameConfig.BOOST_MS/1000/60)} min · " + stringResource(R.string.free)
-                            boosted            -> stringResource(R.string.add) + "${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
+                            boosted            -> stringResource(R.string.add) + " ${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
                             adsLeft > 0 && adReady -> "${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
                             else               -> null
                         },
@@ -446,13 +479,33 @@ private fun previewPlayer(
     boostUntil = boostUntil, autoFeedUntil = autoFeedUntil, adsToday = adsToday)
 
 @Preview(name = "Normal", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewNormal() { GloubiTheme { GameScreen(previewPlayer(50.0, 250.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
+@Composable private fun PreviewNormal() { GloubiTheme { GameScreen(
+    previewPlayer(50.0, 250.0),
+    System.currentTimeMillis(),
+    true,
+    0.0,
+    0,
+    {},
+    {},
+    0,
+    {},
+    {},
+    {},
+    {},
+    {},
+    "skin_default",
+    "anim_default",
+    "food_kibble",
+    freeBoostAvailable = true,
+    freeBigFeedAvailable = true,
+    freeAutoFeedAvailable = true
+) } }
 
-@Preview(name = "Rassasié + boost", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewBoosted() { val n = System.currentTimeMillis(); GloubiTheme { GameScreen(previewPlayer(99.5, 750.0, n + 180_000), n, true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
+//@Preview(name = "Rassasié + boost", showBackground = true, showSystemUi = true)
+//@Composable private fun PreviewBoosted() { val n = System.currentTimeMillis(); GloubiTheme { GameScreen(previewPlayer(99.5, 750.0, n + 180_000), n, true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}, {}, "skin_default", "anim_default", "food_kibble") } }
 
-@Preview(name = "Critique", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewCritical() { GloubiTheme { GameScreen(previewPlayer(10.0, 500.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
+//@Preview(name = "Critique", showBackground = true, showSystemUi = true)
+//@Composable private fun PreviewCritical() { GloubiTheme { GameScreen(previewPlayer(10.0, 500.0), System.currentTimeMillis(), true, 0.0, 0, {}, {}, 0, {}, {}, {}, {}, {}, "skin_default", "anim_default", "food_kibble") } }
 
-@Preview(name = "Hors-ligne", showBackground = true, showSystemUi = true)
-@Composable private fun PreviewOffline() { GloubiTheme { GameScreen(previewPlayer(60.0, 3100.0), System.currentTimeMillis(), true, 42.0, 0, {}, {}, 0, {}, {}, {}, {}) } }
+//@Preview(name = "Hors-ligne", showBackground = true, showSystemUi = true)
+//@Composable private fun PreviewOffline() { GloubiTheme { GameScreen(previewPlayer(60.0, 3100.0), System.currentTimeMillis(), true, 42.0, 0, {}, {}, 0, {}, {}, {}, {}, {}, "skin_default", "anim_default", "food_kibble") } }
