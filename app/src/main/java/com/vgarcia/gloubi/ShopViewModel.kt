@@ -15,8 +15,8 @@ import kotlinx.coroutines.launch
 
 class ShopViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val db     = AppDb.get(app)
-    private val dao    = db.playerDao()
+    private val db = AppDb.get(app)
+    private val playerDao = db.playerDao()
     private val shopDao = db.shopDao()
 
     val items: StateFlow<List<ShopItem>> = shopDao.observe()
@@ -38,7 +38,7 @@ class ShopViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch(Dispatchers.IO) {
             shopDao.save(item.copy(purchased = true))
         }
-        onCoinsDeducted(currentCoins - item.price)
+        onCoinsDeducted(item.price)
         return true
     }
 

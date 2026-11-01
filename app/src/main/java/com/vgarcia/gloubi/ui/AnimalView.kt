@@ -292,7 +292,7 @@ fun AnimalView(
             sad -> {
                 val arcW = r * 0.36f; val arcH = r * 0.28f
                 drawArc(dark, 200f, 140f, false,
-                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f + r * 0.05f), Size(arcW, arcH),
                     style = Stroke(stroke, cap = StrokeCap.Round))
             }
             // Bouche heureuse : arc ouvert vers le bas (20°→160°)

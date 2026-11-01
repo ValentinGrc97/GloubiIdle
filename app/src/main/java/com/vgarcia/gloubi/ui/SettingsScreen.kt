@@ -175,7 +175,7 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             // Header
-            Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 16.dp),
+            Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack) {
                     Icon(Icons.AutoMirrored.Rounded.ArrowBack, stringResource(R.string.back), tint = Color.White)

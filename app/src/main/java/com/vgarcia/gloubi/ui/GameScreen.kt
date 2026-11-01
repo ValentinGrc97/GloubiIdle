@@ -10,6 +10,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,9 +52,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.vgarcia.gloubi.R
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
@@ -249,24 +252,6 @@ fun GameScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // Bannière hors-ligne
-                AnimatedVisibility(
-                    visible = offlineGain > 0,
-                    enter = fadeIn() + slideInVertically()
-                ) {
-                    GloubiCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(
-                                stringResource(R.string.during_offline) + " +${offlineGain.toInt()} XP",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            OutlinedButton(onClick = onDismissOffline) { Text("OK") }
-                        }
-                    }
-                }
-
                 // Animal
                 AnimalView(
                     satiety = player.satiety.toFloat(),
@@ -423,7 +408,7 @@ fun GameScreen(
             BannerAdView()
         }
 
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 24.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 24.dp)) {
             // Header
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp),
@@ -445,24 +430,41 @@ fun GameScreen(
                     )
                 }
             }
-            Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp)) {
-                Spacer(Modifier.weight(1f))
-                Button(modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow)))
-                    .padding(horizontal = 2.dp, vertical = 2.dp), onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            player.coins.toString(),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.White
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Icon(
-                            Icons.Rounded.ShoppingCart,
-                            contentDescription = stringResource(R.string.shop_title),
-                            tint = Color.White.copy(alpha = 0.8f),
-                            modifier = Modifier.size(24.dp)
-                        )
+            Box {
+                Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp)) {
+                    Spacer(Modifier.weight(1f))
+                    Button(modifier = Modifier.clip(RoundedCornerShape(20.dp))
+                        .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow))),
+                        onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                player.coins.toString(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = Color.White,
+                                fontSize = 16.sp
+                            )
+                            Spacer(Modifier.width(4.dp))
+                            Image(painter = painterResource(R.drawable.coins), contentDescription = stringResource(id = R.string.coins), Modifier.size(20.dp))
+                        }
+                    }
+                }
+                Column {
+                    // Bannière hors-ligne
+                    AnimatedVisibility(
+                        visible = offlineGain > 0,
+                        enter = fadeIn() + slideInVertically()
+                    ) {
+                        GloubiCard(Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    stringResource(R.string.during_offline) + " +${offlineGain.toInt()} XP",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(Modifier.height(6.dp))
+                                OutlinedButton(onClick = onDismissOffline) { Text("OK") }
+                            }
+                        }
                     }
                 }
             }
@@ -473,14 +475,14 @@ fun GameScreen(
 // ─── Previews ────────────────────────────────────────────────────────────────
 
 private fun previewPlayer(
-    satiety: Double = 50.0, progress: Double = 0.0,
+    satiety: Double = 50.0, progress: Double = 0.0, coins: Int = 0,
     boostUntil: Long = 0L, autoFeedUntil: Long = 0L, adsToday: Int = 0
-) = Player(satiety = satiety, progress = progress, lastSeen = System.currentTimeMillis(),
+) = Player(satiety = satiety, progress = progress, coins = coins, lastSeen = System.currentTimeMillis(),
     boostUntil = boostUntil, autoFeedUntil = autoFeedUntil, adsToday = adsToday)
 
 @Preview(name = "Normal", showBackground = true, showSystemUi = true)
 @Composable private fun PreviewNormal() { GloubiTheme { GameScreen(
-    previewPlayer(50.0, 250.0),
+    previewPlayer(75.0, 250.0, 500),
     System.currentTimeMillis(),
     true,
     0.0,

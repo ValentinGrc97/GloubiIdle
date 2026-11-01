@@ -2,6 +2,7 @@ package com.vgarcia.gloubi.ui
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -46,6 +47,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -182,10 +184,12 @@ private fun ShopItemCard(
                         tint = if (coins >= item.price) GloubiYellow else GloubiRed)
                     Spacer(Modifier.width(4.dp))
                     Text(
-                        "${item.price} 🪙",
+                        item.price.toString(),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (coins >= item.price) GloubiYellow else GloubiRed
                     )
+                    Spacer(Modifier.width(2.dp))
+                    Image(painter = painterResource(R.drawable.coins), contentDescription = stringResource(id = R.string.coins), Modifier.size(12.dp))
                 }
             }
         }
@@ -219,7 +223,7 @@ fun ShopScreen(
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 12.dp),
+                    .padding(horizontal = 8.dp, vertical = 24.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -237,12 +241,17 @@ fun ShopScreen(
                         .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow)))
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 ) {
-                    Text(
-                        "🪙 $coins",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = Color(0xFF1A1A00),
-                        fontWeight = FontWeight.Bold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            coins.toString(),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = Color(0xFF1A1A00),
+                            fontWeight = FontWeight.Bold,
+                           fontSize = 16.sp
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        Image(painter = painterResource(R.drawable.coins), contentDescription = stringResource(id = R.string.coins), Modifier.size(20.dp))
+                    }
                 }
             }
 
