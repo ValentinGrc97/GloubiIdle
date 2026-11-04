@@ -6,7 +6,7 @@ object GameConfig {
     // --- Animal ---
     const val FEED_SMALL = 0.01                      // bouton 1 : +0,01 % de faim
     const val FEED_BOOST = 0.1                       // bouton 2 actif : +0,1 % de faim/clic bouton 1
-    const val FEED_BIG = 10.0                        // bouton 3 : grosse ration (pub) : +10 % de faim
+    const val FEED_BIG = 20.0                        // bouton 3 : grosse ration (pub) : +20 % de faim
     const val AUTO_FEED_REWARD_MS = 15 * 60 * 1000L  // bouton 4 : +15 min par pub regardée, limite à AUTO_FEED_MAX_MS
     const val DECAY_PER_SEC = 0.01                   // perte de 0,01 % par seconde
     const val RATIO = 1                              // ratio par rapport à DECAY_PER_SEC pour actualiser la faim tous les 0.01%

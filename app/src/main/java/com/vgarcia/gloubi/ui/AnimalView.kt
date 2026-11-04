@@ -21,6 +21,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -102,6 +103,27 @@ fun AnimalView(
         blink = blinkState.value
     }
 
+    // ── Animations supplémentaires ──────────────────────────────────────────
+    val danceSwing = if (!isPreview) {
+        val i2 = rememberInfiniteTransition(label = "dance")
+        i2.animateFloat(-1f, 1f, infiniteRepeatable(tween(300, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "sw").value
+    } else 0f
+
+    val shakeX = if (!isPreview) {
+        val i3 = rememberInfiniteTransition(label = "shake")
+        i3.animateFloat(-1f, 1f, infiniteRepeatable(tween(180, easing = LinearEasing), RepeatMode.Reverse), label = "sx").value
+    } else 0f
+
+    val rainbowHue = if (!isPreview) {
+        val i4 = rememberInfiniteTransition(label = "rainbow")
+        i4.animateFloat(0f, 1f, infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart), label = "hue").value
+    } else 0f
+
+    val spinAngle = if (!isPreview) {
+        val i5 = rememberInfiniteTransition(label = "spin")
+        i5.animateFloat(0f, 360f, infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart), label = "spi").value
+    } else 0f
+
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
     val foodAnim = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
 
@@ -115,7 +137,8 @@ fun AnimalView(
         if (feedTick > lastFeedTick.intValue) {
             lastFeedTick.intValue = feedTick
             foodAnim.snapTo(0f)
-            launch { foodAnim.animateTo(1f, tween(300, easing = LinearEasing)) }
+            launch { foodAnim.animateTo(1f, tween(500, easing = LinearEasing)) }
+            delay(200.milliseconds)
             mouth.animateTo(1f, tween(300))
             if (boosted) {
                 burstProgress.snapTo(0f)
@@ -126,7 +149,7 @@ fun AnimalView(
                     burstAlpha.animateTo(0f, tween(300))
                 }
             }
-            mouth.animateTo(0f, tween(500))
+            mouth.animateTo(0f, tween(300))
         }
     }
 
@@ -173,41 +196,46 @@ fun AnimalView(
         val ground = h * 0.58f + w * variableByLevel
         // Animation selon animId
         val bounce = when (anim) {
-            "anim_dance"  -> if (happy || satiety > 50f) abs(sin(hop * 2 * PI)).toFloat() * h * 0.07f else 0f
-            "anim_spin"   -> 0f  // la rotation est gérée séparément
-            "anim_shake"  -> if (feedTick % 2 == 0) h * 0.008f else -h * 0.008f
-            "anim_flip"   -> abs(sin(hop * PI)).toFloat() * h * 0.12f
-            else          -> if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
+            "anim_dance" -> abs(sin(hop * PI)).toFloat() * h * 0.10f
+            "anim_flip"  -> abs(sin(hop * PI)).toFloat() * h * 0.15f
+            "anim_spin", "anim_shake" -> 0f
+            else         -> if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
         }
         val cy = h * 0.58f - bounce
-        // Spin : oscillation latérale
-        val cxAnim = if (anim == "anim_spin") cx + sin(hop * 2 * PI).toFloat() * r * 0.3f else cx
+        val cxAnim = when (anim) {
+            "anim_dance" -> cx + danceSwing * r * 0.35f
+            "anim_shake" -> cx + shakeX * r * 0.12f
+            else         -> cx
+        }
         val dark = Color(0xFF2B2B3A)
+
+        fun hsvColor(hue: Float, sat: Float = 0.85f, `val`: Float = 0.95f): Color {
+            val hsv = floatArrayOf(hue * 360f, sat, `val`)
+            return Color(android.graphics.Color.HSVToColor(hsv))
+        }
 
         // Couleur de base selon le skin
         val skinBase = when (skin) {
             "skin_gold"    -> Triple(Color(0xFFFFD54F), Color(0xFFFFF176), Color(0xFFFFC107))
-            "skin_rainbow" -> Triple(Color(0xFFFF80AB), Color(0xFFEA80FC), Color(0xFF82B1FF))
+            "skin_rainbow" -> Triple(
+                hsvColor(rainbowHue),
+                hsvColor((rainbowHue + 0.33f) % 1f),
+                hsvColor((rainbowHue + 0.5f) % 1f, 0.5f, 0.75f)
+            )
             "skin_ghost"   -> Triple(Color(0xFFECEFF1), Color(0xFFFFFFFF), Color(0xFFB0BEC5))
             "skin_fire"    -> Triple(Color(0xFFFF6D00), Color(0xFFFFAB40), Color(0xFFDD2C00))
             "skin_ice"     -> Triple(Color(0xFF80DEEA), Color(0xFFE0F7FA), Color(0xFF00BCD4))
             else           -> Triple(Color(0xFF8FD3F4), Color(0xFF7BDFA0), Color(0xFF9AA5B1))
         }
         val (bodyNormal, bodyHappy, bodySad) = skinBase
+        val body = when { happy -> bodyHappy; sad -> bodySad; else -> bodyNormal }
 
-        val body = when {
-            happy -> bodyHappy
-            sad   -> bodySad
-            else  -> bodyNormal
-        }
-
-        // Couleur des oreilles intérieures selon le skin
         val earInner = when (skin) {
             "skin_gold"    -> Color(0xFFFFECB3)
             "skin_ghost"   -> Color(0xFFCFD8DC)
             "skin_fire"    -> Color(0xFFFFCC02)
             "skin_ice"     -> Color(0xFFB2EBF2)
-            "skin_rainbow" -> Color(0xFFF48FB1)
+            "skin_rainbow" -> hsvColor((rainbowHue + 0.16f) % 1f)
             else           -> Color(0xFFFFC1CC)
         }
         val stroke = r * 0.06f
@@ -215,9 +243,17 @@ fun AnimalView(
         // ombre
         drawOval(Color(0x22000000), Offset(cxAnim - r * 0.8f, ground - r * 0.06f), Size(r * 1.6f, r * 0.14f))
 
+        // Spin : rotation du corps entier
+        if (anim == "anim_spin") {
+            rotate(degrees = spinAngle, pivot = Offset(cxAnim, cy)) { /* pivot only */ }
+        }
+
         // oreilles
-        for (side in listOf(-1f, 1f)) {
-            drawCircle(body, r * 0.28f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
+        listOf(-1f, 1f).forEachIndexed { idx, side ->
+            val earColor = if (skin == "skin_rainbow")
+                hsvColor(((rainbowHue + idx * 0.5f) % 1f))
+            else body
+            drawCircle(earColor, r * 0.28f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
             drawCircle(earInner, r * 0.14f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
         }
 
@@ -238,18 +274,26 @@ fun AnimalView(
         }
         // Effet skin fire : halo de flammes
         if (skin == "skin_fire") {
-            for (i in 0 until 6) {
-                val a = (i.toFloat() / 6f) * 2f * PI.toFloat()
-                drawCircle(Color(0x55FF6D00), r * 0.22f,
-                    Offset(cx + cos(a) * r * 1.1f, cy + sin(a) * r * 1.1f))
+            for (i in 0 until 8) {
+                val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
+                val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
+                drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
+                drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
             }
         }
         // Effet skin ice : cristaux
         if (skin == "skin_ice") {
-            for (i in 0 until 4) {
-                val a = (i.toFloat() / 4f) * 2f * PI.toFloat()
-                drawCircle(Color(0x8880DEEA), r * 0.14f,
-                    Offset(cx + cos(a) * r * 1.25f, cy + sin(a) * r * 1.1f))
+            for (i in 0 until 6) {
+                val a = (i.toFloat() / 6f + sparkle * 0.08f) * 2f * PI.toFloat()
+                val cr = r * 0.12f
+                val ox = cxAnim + cos(a) * r * 1.3f
+                val oy = cy + sin(a) * r * 1.1f
+                val cp = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(ox, oy - cr); lineTo(ox + cr * 0.6f, oy)
+                    lineTo(ox, oy + cr); lineTo(ox - cr * 0.6f, oy); close()
+                }
+                drawPath(cp, Color(0xAAB2EBF2))
+                drawPath(cp, Color(0xFF80DEEA), style = Stroke(cr * 0.18f))
             }
         }
 
@@ -316,7 +360,7 @@ fun AnimalView(
             val byStart = h * 0.02f          // légèrement hors canvas en haut
             val byEnd   = cy + r * 0.40f     // mouthCy : centre visuel de la bouche
             val fy = byStart + (byEnd - byStart) * foodAnim.value
-            val fr = r * 0.10f
+            val fr = r * 0.15f
             when (food) {
                 "food_pizza" -> {
                     // Triangle pizza
@@ -404,6 +448,23 @@ fun AnimalView(
                 Offset(cx + bs * 0.08f, by - bs * 1.10f),
                 Size(bs * 0.45f, bs * 0.28f)
             )
+        }
+
+        // Notes de musique pour anim_dance
+        if (anim == "anim_dance") {
+            val noteAlpha = abs(sin(sparkle * PI.toFloat())).coerceIn(0.3f, 1f)
+            listOf(
+                Offset(cxAnim - r * 1.5f, cy - r * 0.6f),
+                Offset(cxAnim + r * 1.4f, cy - r * 0.8f),
+                Offset(cxAnim - r * 1.3f, cy + r * 0.3f),
+                Offset(cxAnim + r * 1.6f, cy + r * 0.1f),
+            ).forEachIndexed { i, pos ->
+                val ny = pos.y - r * 0.2f * abs(sin((sparkle + i * 0.25f) * PI.toFloat()))
+                drawOval(Color(0xFFFFD54F).copy(alpha = noteAlpha),
+                    Offset(pos.x - r * 0.08f, ny - r * 0.06f), Size(r * 0.16f, r * 0.12f))
+                drawLine(Color(0xFFFFD54F).copy(alpha = noteAlpha),
+                    Offset(pos.x + r * 0.08f, ny), Offset(pos.x + r * 0.08f, ny - r * 0.22f), r * 0.03f)
+            }
         }
 
         // Éclats boost (8 rayons qui partent du centre de Gloubi)

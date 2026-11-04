@@ -57,7 +57,7 @@
     <string name="shop_skin_ghost">Ghost Gloubi</string>
     <string name="shop_skin_fire">Fire Gloubi</string>
     <string name="shop_skin_ice">Ice Gloubi</string>
-    <string name="shop_anim_default">Rebound</string>
+    <string name="shop_anim_default">None</string>
     <string name="shop_anim_dance">Dance</string>
     <string name="shop_anim_spin">Spin</string>
     <string name="shop_anim_shake">Shake</string>

@@ -57,7 +57,7 @@
     <string name="shop_skin_ghost">Geister-Gloubi</string>
     <string name="shop_skin_fire">Feuer-Gloubi</string>
     <string name="shop_skin_ice">Eis-Gloubi</string>
-    <string name="shop_anim_default">Rebound</string>
+    <string name="shop_anim_default">Keiner</string>
     <string name="shop_anim_dance">Tanzen</string>
     <string name="shop_anim_spin">Drehen</string>
     <string name="shop_anim_shake">Shake</string>

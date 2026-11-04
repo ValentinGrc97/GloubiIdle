@@ -68,7 +68,7 @@
     <string name="shop_skin_ice">Gloubi de Glace</string>
 
     <!-- Animations -->
-    <string name="shop_anim_default">Rebond</string>
+    <string name="shop_anim_default">Aucun</string>
     <string name="shop_anim_dance">Danse</string>
     <string name="shop_anim_spin">Rotation</string>
     <string name="shop_anim_shake">Tremblement</string>

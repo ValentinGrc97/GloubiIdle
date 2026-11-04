@@ -56,7 +56,7 @@
     <string name="shop_skin_ghost">Gloubi Fantasma</string>
     <string name="shop_skin_fire">Fuego Gloubi</string>
     <string name="shop_skin_ice">Gloubi helado</string>
-    <string name="shop_anim_default">Rebote</string>
+    <string name="shop_anim_default">Ninguno</string>
     <string name="shop_anim_dance">Bailar</string>
     <string name="shop_anim_spin">Girar</string>
     <string name="shop_anim_shake">Agitar</string>
