@@ -149,7 +149,7 @@ fun AnimalView(
                     burstAlpha.animateTo(0f, tween(300))
                 }
             }
-            mouth.animateTo(0f, tween(300))
+            mouth.animateTo(0f, tween(400))
         }
     }
 
@@ -243,116 +243,122 @@ fun AnimalView(
         // ombre
         drawOval(Color(0x22000000), Offset(cxAnim - r * 0.8f, ground - r * 0.06f), Size(r * 1.6f, r * 0.14f))
 
-        // Spin : rotation du corps entier
-        if (anim == "anim_spin") {
-            rotate(degrees = spinAngle, pivot = Offset(cxAnim, cy)) { /* pivot only */ }
-        }
-
-        // oreilles
-        listOf(-1f, 1f).forEachIndexed { idx, side ->
-            val earColor = if (skin == "skin_rainbow")
-                hsvColor(((rainbowHue + idx * 0.5f) % 1f))
-            else body
-            drawCircle(earColor, r * 0.28f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
-            drawCircle(earInner, r * 0.14f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
-        }
-
-        // pieds
-        for (side in listOf(-1f, 1f)) {
-            drawCircle(body, r * 0.22f, Offset(cxAnim + side * r * 0.45f, cy + r * 0.95f))
-        }
-
-        // corps + ventre
-        drawCircle(body, r, Offset(cxAnim, cy))
-        drawOval(Color(0x33FFFFFF), Offset(cxAnim - r * 0.55f, cy + r * 0.05f), Size(r * 1.1f, r * 0.85f))
-
-        // Effet skin ghost : contour fantôme
-        if (skin == "skin_ghost") {
-            drawCircle(Color(0x44FFFFFF), r * 1.02f, Offset(cx, cy),
-                style = Stroke(r * 0.06f)
-            )
-        }
-        // Effet skin fire : halo de flammes
-        if (skin == "skin_fire") {
-            for (i in 0 until 8) {
-                val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
-                val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
-                drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
-                drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
+        // Corps de Gloubi (éventuellement en rotation)
+        val drawBody: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit = {
+            // oreilles
+            listOf(-1f, 1f).forEachIndexed { idx, side ->
+                val earColor = if (skin == "skin_rainbow")
+                    hsvColor(((rainbowHue + idx * 0.5f) % 1f))
+                else body
+                drawCircle(earColor, r * 0.28f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
+                drawCircle(earInner, r * 0.14f, Offset(cxAnim + side * r * 0.70f, cy - r * 0.85f))
             }
-        }
-        // Effet skin ice : cristaux
-        if (skin == "skin_ice") {
-            for (i in 0 until 6) {
-                val a = (i.toFloat() / 6f + sparkle * 0.08f) * 2f * PI.toFloat()
-                val cr = r * 0.12f
-                val ox = cxAnim + cos(a) * r * 1.3f
-                val oy = cy + sin(a) * r * 1.1f
-                val cp = androidx.compose.ui.graphics.Path().apply {
-                    moveTo(ox, oy - cr); lineTo(ox + cr * 0.6f, oy)
-                    lineTo(ox, oy + cr); lineTo(ox - cr * 0.6f, oy); close()
-                }
-                drawPath(cp, Color(0xAAB2EBF2))
-                drawPath(cp, Color(0xFF80DEEA), style = Stroke(cr * 0.18f))
+
+            // pieds
+            for (side in listOf(-1f, 1f)) {
+                drawCircle(body, r * 0.22f, Offset(cxAnim + side * r * 0.45f, cy + r * 0.95f))
             }
-        }
 
-        // joues
-        for (side in listOf(-1f, 1f)) {
-            drawCircle(Color(0x66FF8FA3), r * 0.13f, Offset(cxAnim + side * r * 0.62f, cy + r * 0.22f))
-        }
+            // corps + ventre
+            drawCircle(body, r, Offset(cxAnim, cy))
+            drawOval(Color(0x33FFFFFF), Offset(cxAnim - r * 0.55f, cy + r * 0.05f), Size(r * 1.1f, r * 0.85f))
 
-        // yeux
-        val eyeR = r * 0.17f
-        val eyeY = cy - r * 0.15f
-        for (side in listOf(-1f, 1f)) {
-            val ex = cxAnim + side * r * 0.38f
-            drawOval(Color.White, Offset(ex - eyeR, eyeY - eyeR * blink), Size(eyeR * 2f, eyeR * 2f * blink))
-            if (blink > 0.3f) {
-                drawCircle(dark, eyeR * 0.55f, Offset(ex, eyeY + if (sad) eyeR * 0.25f else 0f))
-                drawCircle(Color.White, eyeR * 0.15f, Offset(ex + eyeR * 0.2f, eyeY - eyeR * 0.2f))
-            }
-        }
-        if (sad) {
-            drawCircle(Color(0xFF6EC1FF), r * 0.06f, Offset(cxAnim + r * 0.50f, eyeY + eyeR * 1.7f))
-        }
-
-        // bouche
-        val mx = cxAnim
-        val mouthCy = cy + r * 0.40f  // centre visuel commun
-
-        when {
-            // Bouche ouverte : ovale dont le centre est exactement mouthCy
-            mouth.value > 0.05f -> {
-                val ovalW = r * 0.40f
-                val ovalH = r * 0.44f * mouth.value
-                drawOval(
-                    Color(0xFF7A1F3D),
-                    Offset(mx - ovalW / 2f, mouthCy - ovalH / 2f + r * 0.05f),
-                    Size(ovalW, ovalH)
+            // Effet skin ghost : contour fantôme
+            if (skin == "skin_ghost") {
+                drawCircle(Color(0x44FFFFFF), r * 1.02f, Offset(cx, cy),
+                    style = Stroke(r * 0.06f)
                 )
             }
-            // Bouche triste : arc ouvert vers le haut (200°→340°)
-            sad -> {
-                val arcW = r * 0.36f; val arcH = r * 0.28f
-                drawArc(dark, 200f, 140f, false,
-                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f + r * 0.05f), Size(arcW, arcH),
-                    style = Stroke(stroke, cap = StrokeCap.Round))
+            // Effet skin fire : halo de flammes
+            if (skin == "skin_fire") {
+                for (i in 0 until 8) {
+                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
+                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
+                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
+                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
+                }
             }
-            // Bouche heureuse : arc ouvert vers le bas (20°→160°)
-            happy -> {
-                val arcW = r * 0.48f; val arcH = r * 0.38f
-                drawArc(dark, 20f, 140f, false,
-                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
-                    style = Stroke(stroke, cap = StrokeCap.Round))
+            // Effet skin ice : cristaux
+            if (skin == "skin_ice") {
+                for (i in 0 until 6) {
+                    val a = (i.toFloat() / 6f + sparkle * 0.08f) * 2f * PI.toFloat()
+                    val cr = r * 0.12f
+                    val ox = cxAnim + cos(a) * r * 1.3f
+                    val oy = cy + sin(a) * r * 1.1f
+                    val cp = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(ox, oy - cr); lineTo(ox + cr * 0.6f, oy)
+                        lineTo(ox, oy + cr); lineTo(ox - cr * 0.6f, oy); close()
+                    }
+                    drawPath(cp, Color(0xAAB2EBF2))
+                    drawPath(cp, Color(0xFF80DEEA), style = Stroke(cr * 0.18f))
+                }
             }
-            // Bouche neutre : petit arc
-            else -> {
-                val arcW = r * 0.30f; val arcH = r * 0.18f
-                drawArc(dark, 25f, 130f, false,
-                    Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
-                    style = Stroke(stroke, cap = StrokeCap.Round))
+
+            // joues
+            for (side in listOf(-1f, 1f)) {
+                drawCircle(Color(0x66FF8FA3), r * 0.13f, Offset(cxAnim + side * r * 0.62f, cy + r * 0.22f))
             }
+
+            // yeux
+            val eyeR = r * 0.17f
+            val eyeY = cy - r * 0.15f
+            for (side in listOf(-1f, 1f)) {
+                val ex = cxAnim + side * r * 0.38f
+                drawOval(Color.White, Offset(ex - eyeR, eyeY - eyeR * blink), Size(eyeR * 2f, eyeR * 2f * blink))
+                if (blink > 0.3f) {
+                    drawCircle(dark, eyeR * 0.55f, Offset(ex, eyeY + if (sad) eyeR * 0.25f else 0f))
+                    drawCircle(Color.White, eyeR * 0.15f, Offset(ex + eyeR * 0.2f, eyeY - eyeR * 0.2f))
+                }
+            }
+            if (sad) {
+                drawCircle(Color(0xFF6EC1FF), r * 0.06f, Offset(cxAnim + r * 0.50f, eyeY + eyeR * 1.7f))
+            }
+
+            // bouche
+            val mx = cxAnim
+            val mouthCy = cy + r * 0.40f  // centre visuel commun
+
+            when {
+                // Bouche ouverte : ovale dont le centre est exactement mouthCy
+                mouth.value > 0.05f -> {
+                    val ovalW = r * 0.40f
+                    val ovalH = r * 0.44f * mouth.value
+                    drawOval(
+                        Color(0xFF7A1F3D),
+                        Offset(mx - ovalW / 2f, mouthCy - ovalH / 2f + r * 0.05f),
+                        Size(ovalW, ovalH)
+                    )
+                }
+                // Bouche triste : arc ouvert vers le haut (200°→340°)
+                sad -> {
+                    val arcW = r * 0.36f; val arcH = r * 0.28f
+                    drawArc(dark, 200f, 140f, false,
+                        Offset(mx - arcW / 2f, mouthCy - arcH / 2f + r * 0.1f), Size(arcW, arcH),
+                        style = Stroke(stroke, cap = StrokeCap.Round))
+                }
+                // Bouche heureuse : arc ouvert vers le bas (20°→160°)
+                happy -> {
+                    val arcW = r * 0.48f; val arcH = r * 0.38f
+                    drawArc(dark, 20f, 140f, false,
+                        Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                        style = Stroke(stroke, cap = StrokeCap.Round))
+                }
+                // Bouche neutre : petit arc
+                else -> {
+                    val arcW = r * 0.30f; val arcH = r * 0.18f
+                    drawArc(dark, 25f, 130f, false,
+                        Offset(mx - arcW / 2f, mouthCy - arcH / 2f), Size(arcW, arcH),
+                        style = Stroke(stroke, cap = StrokeCap.Round))
+                }
+            }
+
+        } // fin drawBody
+
+        // Appliquer le dessin du corps (avec rotation si anim_spin)
+        if (anim == "anim_spin") {
+            rotate(degrees = spinAngle, pivot = Offset(cxAnim, cy)) { drawBody() }
+        } else {
+            drawBody()
         }
 
         // Nourriture qui tombe vers la bouche
@@ -467,41 +473,56 @@ fun AnimalView(
             }
         }
 
-        // Éclats boost (8 rayons qui partent du centre de Gloubi)
+        // Éclats boost : explosion d'étoiles colorées + onde de choc
         if (burstProgress.value > 0f && burstAlpha.value > 0f) {
-            val numRays = 8
-            val maxLen  = r * 1.6f
-            val minLen  = r * 0.7f
-            val rayLen  = minLen + (maxLen - minLen) * burstProgress.value
-            val tipR    = r * 0.07f * (1f - burstProgress.value * 0.5f)
-            val alpha   = burstAlpha.value
-            for (i in 0 until numRays) {
-                val angle = (i.toFloat() / numRays) * 2f * PI.toFloat()
-                val startX = cx + cos(angle) * r * 0.5f
-                val startY = cy + sin(angle) * r * 0.5f
-                val endX   = cx + cos(angle) * (r * 0.5f + rayLen)
-                val endY   = cy + sin(angle) * (r * 0.5f + rayLen)
-                // rayon
-                drawLine(
-                    color = Color(0xFFFFD54F).copy(alpha = alpha),
-                    start = Offset(startX, startY),
-                    end   = Offset(endX, endY),
-                    strokeWidth = r * 0.07f * (1f - burstProgress.value * 0.4f),
-                    cap = StrokeCap.Round
-                )
-                // étoile au bout du rayon
-                drawCircle(
-                    color = Color(0xFFFFFFFF).copy(alpha = alpha * 0.85f),
-                    radius = tipR,
-                    center = Offset(endX, endY)
-                )
-            }
-            // Halo central
-            drawCircle(
-                color = Color(0xFFFFD54F).copy(alpha = alpha * 0.25f),
-                radius = r * 0.6f * burstProgress.value,
-                center = Offset(cx, cy)
+            val prog  = burstProgress.value
+            val alpha = burstAlpha.value
+
+            // Onde de choc : anneau qui se dilate et disparaît
+            val ringRadius = r * 0.4f + r * 1.8f * prog
+            val ringAlpha  = alpha * (1f - prog * 0.8f)
+            drawCircle(Color(0xFFFFFFFF).copy(alpha = ringAlpha * 0.6f), ringRadius, Offset(cx, cy),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.08f * (1f - prog * 0.6f)))
+            drawCircle(Color(0xFFFFD54F).copy(alpha = ringAlpha * 0.4f), ringRadius * 0.75f, Offset(cx, cy),
+                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.05f))
+
+            // 12 particules étoilées colorées
+            val starColors = listOf(
+                Color(0xFFFFD54F), Color(0xFFFF6B6B), Color(0xFF64B5F6),
+                Color(0xFF81C784), Color(0xFFFF80AB), Color(0xFFFFAB40),
+                Color(0xFFEA80FC), Color(0xFF80DEEA), Color(0xFFFFF176),
+                Color(0xFFFF6D00), Color(0xFF40C4FF), Color(0xFFB2FF59),
             )
+            val numStars = 12
+            for (i in 0 until numStars) {
+                val angle   = (i.toFloat() / numStars) * 2f * PI.toFloat()
+                val dist    = r * 0.3f + r * 1.6f * prog
+                val px      = cx + cos(angle) * dist
+                val py      = cy + sin(angle) * dist
+                val starR   = r * (0.12f - prog * 0.07f)
+                val col     = starColors[i % starColors.size].copy(alpha = alpha)
+
+                // Corps de l'étoile (cercle principal)
+                drawCircle(col, starR, Offset(px, py))
+
+                // 4 pointes
+                for (j in 0 until 4) {
+                    val sa = angle + (j * PI.toFloat() / 2f)
+                    drawLine(col,
+                        Offset(px + cos(sa) * starR * 0.8f, py + sin(sa) * starR * 0.8f),
+                        Offset(px + cos(sa) * starR * 2.0f, py + sin(sa) * starR * 2.0f),
+                        strokeWidth = starR * 0.5f,
+                        cap = StrokeCap.Round
+                    )
+                }
+            }
+
+            // Flash central qui disparaît vite
+            if (prog < 0.3f) {
+                val flashAlpha = alpha * (1f - prog / 0.3f)
+                drawCircle(Color(0xFFFFFFFF).copy(alpha = flashAlpha * 0.9f), r * 0.5f * (1f - prog), Offset(cx, cy))
+                drawCircle(Color(0xFFFFD54F).copy(alpha = flashAlpha * 0.5f), r * 0.9f * (1f - prog), Offset(cx, cy))
+            }
         }
 
         // étincelles quand l'animal est rassasié
