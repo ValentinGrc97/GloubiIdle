@@ -35,7 +35,7 @@ interface ShopDao {
     suspend fun getEquipped(cat: ShopCategory): ShopItem?
 }
 
-@Database(entities = [Player::class, ShopItem::class], version = 7, exportSchema = false)
+@Database(entities = [Player::class, ShopItem::class], version = 8, exportSchema = false)
 abstract class AppDb : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun shopDao(): ShopDao
@@ -46,9 +46,7 @@ abstract class AppDb : RoomDatabase() {
             instance ?: synchronized(this) {
                 instance ?: Room.databaseBuilder(
                     context.applicationContext, AppDb::class.java, "idle.db"
-                )
-                    .fallbackToDestructiveMigration(false)
-                    .build().also { instance = it }
+                ).build().also { instance = it }
             }
     }
 }

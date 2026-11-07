@@ -12,7 +12,7 @@
     <string name="boost_remaining">"⚡ Boost rimanente : "</string>
     <string name="reach">Raggiungi</string>
     <string name="hungry">⚠️ Gloubi ha molta fame!</string>
-    <string name="get_gloubi_grow">per guadagnare XP e far crescere Gloubi</string>
+    <string name="get_gloubi_grow">per guadagnare XP e Coins, e far crescere Gloubi</string>
     <string name="boosted_active">Boost attivo</string>
     <string name="auto_feed_active">"🔄 Alimentazione automatica attiva — rimanente"</string>
     <string name="add">Aggiungi</string>
@@ -52,6 +52,7 @@
     <string name="shop_buy">Acquistare</string>
     <string name="shop_confirm_buy">Acquistare per %1$d Coins ?</string>
     <string name="shop_confirm_desc">Saldo attuale: %1$d Coins</string>
+    <string name="missions">Missioni</string>
     <string name="shop_skin_gold">Gloubi Dorato</string>
     <string name="shop_skin_rainbow">Gloubi Arcobaleno</string>
     <string name="shop_skin_ghost">Fantasma Gloubi</string>

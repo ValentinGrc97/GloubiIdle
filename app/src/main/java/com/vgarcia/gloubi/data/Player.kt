@@ -15,8 +15,19 @@ data class Player(
     val adsToday: Int = 0,                              // nombre d'Ads vues sur la journée
     val adsDay: Long = 0L,
 
-    // Usage gratuit quotidien : 0 = disponible, sinon = jour (UTC) de la dernière utilisation
+    // Usage gratuit quotidien (jour UTC de la dernière utilisation, 0 = jamais)
     val freeBoostUsedDay: Long = 0L,
     val freeBigFeedUsedDay: Long = 0L,
     val freeAutoFeedUsedDay: Long = 0L,
+
+    // Connexion journalière
+    val loginStreak: Int = 0,          // nombre de jours consécutifs de connexion
+    val lastLoginDay: Long = 0L,       // jour UTC de la dernière connexion traitée
+
+    // Missions quotidiennes
+    val missionDay: Long = 0L,         // jour UTC auquel les compteurs ci-dessous se rapportent
+    val missionFeedCount: Int = 0,     // nourrissages du jour
+    val missionAboveMs: Long = 0L,     // temps passé >= 95 % aujourd'hui (ms)
+    val missionAdsCount: Int = 0,      // pubs regardées aujourd'hui
+    val missionClaimedMask: Int = 0,   // bit 0 = nourrir, bit 1 = 95 %, bit 2 = pubs (récompense versée)
 )

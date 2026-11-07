@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -33,6 +35,7 @@ import androidx.compose.material.icons.rounded.Egg
 import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.RiceBowl
 import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -41,14 +44,21 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -56,6 +66,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vgarcia.gloubi.LoginReward
 import com.vgarcia.gloubi.R
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
@@ -66,6 +77,7 @@ import com.vgarcia.gloubi.ui.theme.GloubiOrange
 import com.vgarcia.gloubi.ui.theme.GloubiRed
 import com.vgarcia.gloubi.ui.theme.GloubiSurface
 import com.vgarcia.gloubi.ui.theme.GloubiSurface2
+import com.vgarcia.gloubi.ui.theme.GloubiTeal
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
 import com.vgarcia.gloubi.ui.theme.GloubiYellow
 import java.util.Locale
@@ -203,7 +215,9 @@ fun GameScreen(
     equippedFood: String,
     freeBoostAvailable: Boolean = false,
     freeBigFeedAvailable: Boolean = false,
-    freeAutoFeedAvailable: Boolean = false
+    freeAutoFeedAvailable: Boolean = false,
+    loginReward: LoginReward? = null,
+    onDismissLoginReward: () -> Unit = {}
 ) {
     val boosted    = nowMs < player.boostUntil
     val boostLeftSec = if (boosted) ((player.boostUntil - nowMs) / 1_000L) + 1 else 0L
@@ -218,6 +232,11 @@ fun GameScreen(
     val adsLeft    = GameConfig.MAX_ADS_PER_DAY - player.adsToday
     val level      = GameConfig.levelFromProgress(player.progress)+1
     val (xpInLevel, xpForLevel) = GameConfig.xpInCurrentLevel(player.progress)
+    var showMissionsDialog by remember { mutableStateOf(false) }
+    val blurRadius by animateDpAsState(
+        targetValue = if (showMissionsDialog) 16.dp else 0.dp,
+        label = "BlurAnimation"
+    )
 
     // Fond dégradé vertical qui évolue selon l'état de Gloubi
     val bgTop = when {
@@ -231,7 +250,7 @@ fun GameScreen(
         else     -> Color(0xFF0E1A12)
     }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         // Fond dégradé
         Box(
             Modifier
@@ -241,32 +260,96 @@ fun GameScreen(
         // Particules flottantes
         FloatingParticles(Modifier.fillMaxSize())
 
-        Column(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().blur(radius = blurRadius)) {
             Column(
                 modifier = Modifier
                     .weight(1f)
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp),
+                    .padding(horizontal = 8.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Header
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 2.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        stringResource(R.string.app_name),
+                        style = MaterialTheme.typography.headlineLarge,
+                        color = Color.White,
+                        modifier = Modifier.padding(start = 8.dp)
+                    )
+                    androidx.compose.material3.IconButton(onClick = onSettings) {
+                        Icon(
+                            Icons.Rounded.Settings,
+                            contentDescription = stringResource(R.string.settings),
+                            tint = Color.White.copy(alpha = 0.8f),
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
 
-                // Animal
-                AnimalView(
-                    satiety = player.satiety.toFloat(),
-                    feedTick = feedTick,
-                    bigFeedTick = bigFeedTick,
-                    boosted = boosted,
-                    level = level,
-                    skin = equippedSkin,
-                    anim = equippedAnim,
-                    food = equippedFood
-                )
+                Box {
+                    // Animal
+                    AnimalView(
+                        modifier = Modifier.fillMaxWidth(),
+                        satiety = player.satiety.toFloat(),
+                        feedTick = feedTick,
+                        bigFeedTick = bigFeedTick,
+                        boosted = boosted,
+                        level = level,
+                        skin = equippedSkin,
+                        anim = equippedAnim,
+                        food = equippedFood
+                    )
+                    Row(Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 2.dp, vertical = 2.dp)) {
+                        //Missions badge
+                        Button(modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiTeal))),
+                            onClick = { showMissionsDialog = true }, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Image(painter = painterResource(R.drawable.ic_missions), contentDescription = stringResource(id = R.string.missions), Modifier.size(20.dp))
+                            }
+                        }
+                        Spacer(Modifier.weight(1f))
+                        //Coins badge
+                        Button(modifier = Modifier
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    listOf(
+                                        Color(0xFFB8860B),
+                                        GloubiYellow
+                                    )
+                                )
+                            ),
+                            onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    player.coins.toString(),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color.White,
+                                    fontSize = 16.sp
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Image(painter = painterResource(R.drawable.coins), contentDescription = stringResource(id = R.string.coins), Modifier.size(20.dp))
+                            }
+                        }
+                    }
+                }
+                loginReward?.let { LoginRewardBanner(it, onDismissLoginReward) }
 
                 // Barre de faim
                 AnimatedVisibility(visible = true, enter = fadeIn(tween(400))) {
                     GloubiCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -314,8 +397,10 @@ fun GameScreen(
                 }
 
                 // Grille 2×2
-                val half = Modifier.weight(1f).fillMaxWidth()
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                val half = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ActionButton(
                         onClick = onFeed,
                         urgent = critical,
@@ -346,7 +431,7 @@ fun GameScreen(
                         secondIcon = if (adsLeft > 0 && !freeBoostAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
                     )
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     ActionButton(
                         onClick = onFeedBig,
                         enabled = freeBigFeedAvailable || adReady,
@@ -380,7 +465,7 @@ fun GameScreen(
                 // Carte niveau
                 AnimatedVisibility(visible = true, enter = fadeIn(tween(600))) {
                     GloubiCard(Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Row(
                                 Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -407,53 +492,19 @@ fun GameScreen(
             BannerAdView()
         }
 
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 24.dp)) {
-            // Header
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-                androidx.compose.material3.IconButton(onClick = onSettings) {
-                    Icon(
-                        Icons.Rounded.Settings,
-                        contentDescription = stringResource(R.string.settings),
-                        tint = Color.White.copy(alpha = 0.8f),
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
-            }
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp, vertical = 24.dp)) {
             Box {
-                Row(Modifier.fillMaxWidth().padding(horizontal = 2.dp, vertical = 2.dp)) {
-                    Spacer(Modifier.weight(1f))
-                    Button(modifier = Modifier.clip(RoundedCornerShape(20.dp))
-                        .background(Brush.linearGradient(listOf(Color(0xFFB8860B), GloubiYellow))),
-                        onClick = onShop, colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                player.coins.toString(),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = Color.White,
-                                fontSize = 16.sp
-                            )
-                            Spacer(Modifier.width(4.dp))
-                            Image(painter = painterResource(R.drawable.coins), contentDescription = stringResource(id = R.string.coins), Modifier.size(20.dp))
-                        }
-                    }
-                }
-                Column {
-                    // Bannière hors-ligne
+                // Bannière hors-ligne
+                Column(modifier = Modifier.padding(top = 24.dp)) {
                     AnimatedVisibility(
                         visible = offlineGain > 0,
                         enter = fadeIn() + slideInVertically()
                     ) {
-                        GloubiCard(Modifier.fillMaxWidth()) {
+                        GloubiCard(Modifier
+                            .fillMaxWidth()
+                            .graphicsLayer(alpha = 0.8f)) {
                             Column(Modifier.padding(16.dp)) {
                                 Text(
                                     stringResource(R.string.during_offline) + " +${offlineGain.toInt()} XP",
@@ -462,6 +513,35 @@ fun GameScreen(
                                 )
                                 Spacer(Modifier.height(6.dp))
                                 OutlinedButton(onClick = onDismissOffline) { Text("OK") }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Column {
+            Box {
+                // Liste missions
+                Column(modifier = Modifier.padding(top = 24.dp)) {
+                    AnimatedVisibility(
+                        visible = showMissionsDialog,
+                        enter = fadeIn() + slideInVertically()
+                    ) {
+                        GloubiCard(Modifier.fillMaxWidth()) {
+                            Column(
+                                Modifier.padding(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                StreakCard(
+                                    streak = player.loginStreak,
+                                    loggedInToday = player.lastLoginDay == nowMs / 86_400_000L
+                                )
+                                MissionsCard(player = player, todayDay = nowMs / 86_400_000L)
+                                Spacer(Modifier.height(6.dp))
+                                OutlinedButton(onClick = {
+                                    showMissionsDialog = false
+                                }) { Text("OK") }
                             }
                         }
                     }

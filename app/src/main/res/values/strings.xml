@@ -14,7 +14,7 @@
     <string name="boost_remaining">"⚡ Remaining boost : "</string>
     <string name="reach">Reach</string>
     <string name="hungry">⚠️ Gloubi is very hungry !</string>
-    <string name="get_gloubi_grow">to win XP and make Gloubi growing</string>
+    <string name="get_gloubi_grow">to win XP and Coins, and make Gloubi growing</string>
     <string name="boosted_active">Active boost</string>
     <string name="auto_feed_active">"🔄 Active auto-feed — remaining"</string>
     <string name="add">Add</string>
@@ -59,6 +59,7 @@
     <string name="shop_confirm_buy">Buy for %1$d Coins ?</string>
     <string name="shop_confirm_desc">Current balance : %1$d Coins</string>
     <string name="coins" translatable="false">Coins</string>
+    <string name="missions">Missions</string>
 
     <!-- Skins -->
     <string name="shop_skin_default" translatable="false">Gloubi</string>

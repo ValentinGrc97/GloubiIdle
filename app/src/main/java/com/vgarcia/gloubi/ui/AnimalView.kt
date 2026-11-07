@@ -482,9 +482,11 @@ fun AnimalView(
             val ringRadius = r * 0.4f + r * 1.8f * prog
             val ringAlpha  = alpha * (1f - prog * 0.8f)
             drawCircle(Color(0xFFFFFFFF).copy(alpha = ringAlpha * 0.6f), ringRadius, Offset(cx, cy),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.08f * (1f - prog * 0.6f)))
+                style = Stroke(r * 0.08f * (1f - prog * 0.6f))
+            )
             drawCircle(Color(0xFFFFD54F).copy(alpha = ringAlpha * 0.4f), ringRadius * 0.75f, Offset(cx, cy),
-                style = androidx.compose.ui.graphics.drawscope.Stroke(r * 0.05f))
+                style = Stroke(r * 0.05f)
+            )
 
             // 12 particules étoilées colorées
             val starColors = listOf(

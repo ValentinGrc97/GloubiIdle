@@ -13,6 +13,7 @@ import com.vgarcia.gloubi.MainActivity
 import com.vgarcia.gloubi.data.AppDb
 import com.vgarcia.gloubi.data.GameConfig
 import androidx.core.content.edit
+import com.vgarcia.gloubi.AppForeground
 import com.vgarcia.gloubi.R
 
 class HungerNotificationWorker(
@@ -30,6 +31,9 @@ class HungerNotificationWorker(
     }
 
     override suspend fun doWork(): Result {
+        // Appli ouverte : le joueur voit déjà Gloubi, inutile de notifier
+        if (AppForeground.isForeground) return Result.success()
+
         val player = AppDb.get(ctx).playerDao().get() ?: return Result.success()
         val now = System.currentTimeMillis()
 

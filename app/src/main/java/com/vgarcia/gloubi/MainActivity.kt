@@ -32,6 +32,16 @@ import com.vgarcia.gloubi.ui.ShopScreen
 import com.vgarcia.gloubi.ui.theme.GloubiTheme
 import kotlinx.coroutines.launch
 
+/**
+ * Indique si l'activité principale est visible à l'écran.
+ * Mis à jour par MainActivity (onStart / onStop). Lu par HungerNotificationWorker
+ * pour ne pas notifier un joueur qui a déjà l'appli ouverte.
+ */
+object AppForeground {
+    @Volatile
+    var isForeground: Boolean = false
+}
+
 class MainActivity : ComponentActivity() {
 
     private val gameVm: GameViewModel by viewModels()
@@ -60,6 +70,7 @@ class MainActivity : ComponentActivity() {
             GloubiTheme {
                 val player      by gameVm.player.collectAsState()
                 val offline     by gameVm.offlineGain.collectAsState()
+                val loginReward by gameVm.loginReward.collectAsState()
                 val boostReady  by adManagerBoost.isReady.collectAsState()
                 val bigReady    by adManagerBigFeed.isReady.collectAsState()
                 val autoReady   by adManagerAuto.isReady.collectAsState()
@@ -74,6 +85,7 @@ class MainActivity : ComponentActivity() {
                         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
                     )
                 }
+                val showMissions by remember { mutableStateOf(false) }
                 val shopItems by shopVm.items.collectAsState()
                 var showShop by remember { mutableStateOf(false) }
 
@@ -90,7 +102,10 @@ class MainActivity : ComponentActivity() {
                         notificationsEnabled = notifEnabled.value,
                         onToggleNotifications = { enabled ->
                             if (enabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 0)
+                                requestPermissions(
+                                    arrayOf(android.Manifest.permission.POST_NOTIFICATIONS),
+                                    0
+                                )
                             }
                             notifEnabled.value = enabled
                             if (enabled) HungerScheduler.schedule(this)
@@ -152,7 +167,9 @@ class MainActivity : ComponentActivity() {
                         equippedFood = shopVm.equippedFood(),
                         freeBoostAvailable    = gameVm.canUseFreeBoost(),
                         freeBigFeedAvailable  = gameVm.canUseFreeBigFeed(),
-                        freeAutoFeedAvailable = gameVm.canUseFreeAutoFeed()
+                        freeAutoFeedAvailable = gameVm.canUseFreeAutoFeed(),
+                        loginReward = loginReward,
+                        onDismissLoginReward = gameVm::dismissLoginReward
                     )
                 }
             }
@@ -200,8 +217,14 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        AppForeground.isForeground = true
+    }
+
     override fun onStop() {
         super.onStop()
+        AppForeground.isForeground = false
         gameVm.saveOnPause()
     }
 }
