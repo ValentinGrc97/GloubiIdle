@@ -29,10 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vgarcia.gloubi.LoginReward
+import com.vgarcia.gloubi.R
 import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Missions
 import com.vgarcia.gloubi.data.Player
@@ -74,13 +76,13 @@ fun StreakBadge(streak: Int, modifier: Modifier = Modifier) {
         Spacer(Modifier.width(8.dp))
         Column {
             Text(
-                "$streak ${if (streak > 1) "jours" else "jour"}",
+                "$streak ${if (streak > 1) stringResource(R.string.days) else stringResource(R.string.day)}",
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.White,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "Série en cours",
+                stringResource(R.string.ongoing_series),
                 style = MaterialTheme.typography.labelSmall,
                 color = Color.White.copy(alpha = 0.85f)
             )
@@ -92,8 +94,8 @@ fun StreakBadge(streak: Int, modifier: Modifier = Modifier) {
 @Composable
 fun StreakCard(streak: Int, loggedInToday: Boolean, modifier: Modifier = Modifier) {
     val nextIndex = GameConfig.streakDayIndex(streak + 1)
-    val nextText = if (nextIndex == GameConfig.STREAK_BIG_FEED_DAY) "grosse ration offerte"
-    else "+${GameConfig.streakSatietyBonus(nextIndex).toInt()} % de faim"
+    val nextText = if (nextIndex == GameConfig.STREAK_BIG_FEED_DAY) stringResource(R.string.big_feed) + stringResource(R.string.offered)
+    else "+${GameConfig.streakSatietyBonus(nextIndex).toInt()} % " + stringResource(R.string.hunger)
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -105,13 +107,13 @@ fun StreakCard(streak: Int, loggedInToday: Boolean, modifier: Modifier = Modifie
             Spacer(Modifier.width(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    "Demain : $nextText",
+                    stringResource(R.string.tomorrow) + nextText,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    if (loggedInToday) "Reviens chaque jour pour faire grandir ta série"
-                    else "Ouvre l'appli aujourd'hui pour garder ta série",
+                    if (loggedInToday) stringResource(R.string.come_back)
+                    else stringResource(R.string.open_app),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -130,20 +132,20 @@ fun LoginRewardBanner(reward: LoginReward, onDismiss: () -> Unit, modifier: Modi
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "🎁 Récompense du jour · série de ${reward.streak} jour${if (reward.streak > 1) "s" else ""}",
+                "🎁 " + stringResource(R.string.day_reward) + " · " + stringResource(R.string.streak_of) + reward.streak + if (reward.streak > 1) stringResource(R.string.days) else stringResource(R.string.day),
                 style = MaterialTheme.typography.titleMedium,
                 color = GloubiYellow
             )
             Text(
-                if (reward.bigFeed) "Jour 7 : une grosse ration t'est offerte !"
-                else "+${reward.satietyBonus.toInt()} % de faim et +${reward.coinBonus} 🪙",
+                if (reward.bigFeed) stringResource(R.string.week_streak)
+                else "+${reward.satietyBonus.toInt()} %" + stringResource(R.string.hunger) + ", +${reward.coinBonus} 🪙",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Button(
                 onClick = onDismiss,
                 colors = ButtonDefaults.buttonColors(containerColor = GloubiGreen)
-            ) { Text("Super !") }
+            ) { Text(stringResource(R.string.great)) }
         }
     }
 }
@@ -164,28 +166,28 @@ fun MissionsCard(player: Player, todayDay: Long, modifier: Modifier = Modifier) 
     ) {
         Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Text(
-                "Missions du jour",
+                stringResource(R.string.daily_missions),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
             MissionRow(
-                title = "Nourrir ${Missions.FEED_TARGET} fois",
+                title = stringResource(R.string.feed) + " ${Missions.FEED_TARGET} " + stringResource(R.string.times),
                 progress = feeds.toFloat() / Missions.FEED_TARGET,
-                label = "$feeds / ${Missions.FEED_TARGET}",
+                label = "${feeds.coerceAtMost(Missions.FEED_TARGET)} / ${Missions.FEED_TARGET}",
                 done = (claimed and 1) != 0,
                 reward = Missions.REWARD_FEED
             )
             MissionRow(
-                title = "Rester ≥ ${GameConfig.GAIN_THRESHOLD.toInt()} % pendant ${Missions.ABOVE_MS_TARGET / 60_000L} min",
+                title = stringResource(R.string.stay) + " ≥ ${GameConfig.GAIN_THRESHOLD.toInt()} % " + stringResource(R.string.during) + " ${Missions.ABOVE_MS_TARGET / 60_000L} min",
                 progress = aboveMs.toFloat() / Missions.ABOVE_MS_TARGET.toFloat(),
-                label = "${aboveMs / 60_000L} / ${Missions.ABOVE_MS_TARGET / 60_000L} min",
+                label = "${(aboveMs / 60_000L).coerceAtMost(Missions.ABOVE_MS_TARGET / 60_000L)} / ${Missions.ABOVE_MS_TARGET / 60_000L} min",
                 done = (claimed and 2) != 0,
                 reward = Missions.REWARD_ABOVE
             )
             MissionRow(
-                title = "Regarder ${Missions.ADS_TARGET} pubs",
+                title = stringResource(R.string.watch) + " ${Missions.ADS_TARGET} " + stringResource(R.string.ads),
                 progress = ads.toFloat() / Missions.ADS_TARGET,
-                label = "$ads / ${Missions.ADS_TARGET}",
+                label = "${ads.coerceAtMost(Missions.ADS_TARGET)} / ${Missions.ADS_TARGET}",
                 done = (claimed and 4) != 0,
                 reward = Missions.REWARD_ADS
             )
@@ -209,7 +211,7 @@ private fun MissionRow(
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                if (done) "✅ +$reward XP" else "+$reward XP",
+                if (done) "✅ +$reward XP, +$reward 🪙" else "+$reward XP, +$reward 🪙",
                 style = MaterialTheme.typography.labelSmall,
                 color = if (done) GloubiGreen else GloubiYellow,
                 fontWeight = FontWeight.Bold

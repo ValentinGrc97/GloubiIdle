@@ -63,7 +63,7 @@ object Missions {
     const val FEED_TARGET = 20                       // nourrir 20 fois
     const val ABOVE_MS_TARGET = 10 * 60 * 1000L      // rester >= 95 % pendant 10 min
     const val ADS_TARGET = 3                         // regarder 3 pubs
-    const val REWARD_FEED = 50                       // XP (et coins) bonus
-    const val REWARD_ABOVE = 80
+    const val REWARD_FEED = 20                       // XP (et coins) bonus
+    const val REWARD_ABOVE = 50
     const val REWARD_ADS = 60
 }

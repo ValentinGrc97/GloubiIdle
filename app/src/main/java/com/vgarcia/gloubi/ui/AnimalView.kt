@@ -119,6 +119,11 @@ fun AnimalView(
         i4.animateFloat(0f, 1f, infiniteRepeatable(tween(2000, easing = LinearEasing), RepeatMode.Restart), label = "hue").value
     } else 0f
 
+    val flipT = if (!isPreview) {
+        val i6 = rememberInfiniteTransition(label = "flip")
+        i6.animateFloat(0f, 1f, infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Restart), label = "flipT").value
+    } else 0f
+
     val spinAngle = if (!isPreview) {
         val i5 = rememberInfiniteTransition(label = "spin")
         i5.animateFloat(0f, 360f, infiniteRepeatable(tween(1200, easing = LinearEasing), RepeatMode.Restart), label = "spi").value
@@ -197,7 +202,7 @@ fun AnimalView(
         // Animation selon animId
         val bounce = when (anim) {
             "anim_dance" -> abs(sin(hop * PI)).toFloat() * h * 0.10f
-            "anim_flip"  -> abs(sin(hop * PI)).toFloat() * h * 0.15f
+            "anim_flip"  -> sin(flipT * PI).toFloat() * h * 0.22f   // saut en arc pendant la vrille
             "anim_spin", "anim_shake" -> 0f
             else         -> if (happy) abs(sin(hop * PI)).toFloat() * h * 0.09f else 0f
         }
@@ -222,7 +227,7 @@ fun AnimalView(
                 hsvColor((rainbowHue + 0.33f) % 1f),
                 hsvColor((rainbowHue + 0.5f) % 1f, 0.5f, 0.75f)
             )
-            "skin_ghost"   -> Triple(Color(0xFFECEFF1), Color(0xFFFFFFFF), Color(0xFFB0BEC5))
+            "skin_ghost"   -> Triple(Color(0xCCD1C4E9), Color(0xE6EDE7F6), Color(0xCCB39DDB))
             "skin_fire"    -> Triple(Color(0xFFFF6D00), Color(0xFFFFAB40), Color(0xFFDD2C00))
             "skin_ice"     -> Triple(Color(0xFF80DEEA), Color(0xFFE0F7FA), Color(0xFF00BCD4))
             else           -> Triple(Color(0xFF8FD3F4), Color(0xFF7BDFA0), Color(0xFF9AA5B1))
@@ -232,7 +237,7 @@ fun AnimalView(
 
         val earInner = when (skin) {
             "skin_gold"    -> Color(0xFFFFECB3)
-            "skin_ghost"   -> Color(0xFFCFD8DC)
+            "skin_ghost"   -> Color(0xFFEDE7F6)
             "skin_fire"    -> Color(0xFFFFCC02)
             "skin_ice"     -> Color(0xFFB2EBF2)
             "skin_rainbow" -> hsvColor((rainbowHue + 0.16f) % 1f)
@@ -245,6 +250,30 @@ fun AnimalView(
 
         // Corps de Gloubi (éventuellement en rotation)
         val drawBody: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit = {
+            // Derrière le corps : halo fantôme, traîne ondulée, flammes du feu
+            if (skin == "skin_ghost") {
+                drawCircle(Color(0x228C6CD8), r * 1.45f, Offset(cxAnim, cy))
+                drawCircle(Color(0x448C6CD8), r * 1.18f, Offset(cxAnim, cy))
+                val tail = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(cxAnim - r * 0.95f, cy + r * 0.1f)
+                    for (i in 0..4) {
+                        val x = cxAnim - r * 0.95f + i * r * 0.475f
+                        lineTo(x, cy + r * (if (i % 2 == 0) 1.25f else 0.85f))
+                    }
+                    lineTo(cxAnim + r * 0.95f, cy + r * 0.1f)
+                    close()
+                }
+                drawPath(tail, Color(0x668C6CD8))
+            }
+            if (skin == "skin_fire") {
+                for (i in 0 until 8) {
+                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
+                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
+                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
+                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
+                }
+            }
+
             // oreilles
             listOf(-1f, 1f).forEachIndexed { idx, side ->
                 val earColor = if (skin == "skin_rainbow")
@@ -263,20 +292,13 @@ fun AnimalView(
             drawCircle(body, r, Offset(cxAnim, cy))
             drawOval(Color(0x33FFFFFF), Offset(cxAnim - r * 0.55f, cy + r * 0.05f), Size(r * 1.1f, r * 0.85f))
 
-            // Effet skin ghost : contour fantôme
+            // Devant le corps : contour fantôme lumineux
             if (skin == "skin_ghost") {
-                drawCircle(Color(0x44FFFFFF), r * 1.02f, Offset(cx, cy),
-                    style = Stroke(r * 0.06f)
-                )
+                drawCircle(Color(0xFFE1BEE7), r * 1.0f, Offset(cxAnim, cy), style = Stroke(r * 0.07f))
             }
-            // Effet skin fire : halo de flammes
-            if (skin == "skin_fire") {
-                for (i in 0 until 8) {
-                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
-                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
-                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
-                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
-                }
+            // Reflet brillant du skin doré
+            if (skin == "skin_gold") {
+                drawOval(Color(0xAAFFFFFF), Offset(cxAnim - r * 0.55f, cy - r * 0.55f), Size(r * 0.28f, r * 0.16f))
             }
             // Effet skin ice : cristaux
             if (skin == "skin_ice") {
@@ -355,10 +377,12 @@ fun AnimalView(
         } // fin drawBody
 
         // Appliquer le dessin du corps (avec rotation si anim_spin)
-        if (anim == "anim_spin") {
-            rotate(degrees = spinAngle, pivot = Offset(cxAnim, cy)) { drawBody() }
-        } else {
-            drawBody()
+        when (anim) {
+            "anim_spin"  -> rotate(degrees = spinAngle, pivot = Offset(cxAnim, cy)) { drawBody() }
+            "anim_flip"  -> rotate(degrees = flipT * 360f, pivot = Offset(cxAnim, cy)) { drawBody() }
+            "anim_dance" -> rotate(degrees = danceSwing * 10f, pivot = Offset(cxAnim, h * 0.9f)) { drawBody() }
+            "anim_shake" -> rotate(degrees = shakeX * 5f, pivot = Offset(cxAnim, cy + r)) { drawBody() }
+            else         -> drawBody()
         }
 
         // Nourriture qui tombe vers la bouche

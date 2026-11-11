@@ -8,25 +8,48 @@
     <string name="level">level</string>
     <string name="lvl">Lvl.</string>
     <string name="satiety">Satiety</string>
-    <string name="earning_boosted">"✨ Satieted · Remaining boost : "</string>
-    <string name="earning">✅ Gloubi is satieted !</string>
+    <string name="earning_boosted">"✨ Satiated · Remaining boost : "</string>
+    <string name="earning">✅ Gloubi is satiated !</string>
     <string name="feed">Feed</string>
     <string name="boost_remaining">"⚡ Remaining boost : "</string>
     <string name="reach">Reach</string>
     <string name="hungry">⚠️ Gloubi is very hungry !</string>
-    <string name="get_gloubi_grow">to win XP and Coins, and make Gloubi growing</string>
+    <string name="get_gloubi_grow">to win XP and 🪙, and make Gloubi growing</string>
     <string name="boosted_active">Active boost</string>
     <string name="auto_feed_active">"🔄 Active auto-feed — remaining"</string>
+    <string name="auto_feed">Auto Feed</string>
     <string name="add">Add</string>
-    <string name="left">remaining</string>
+    <string name="remaining">remaining</string>
     <string name="limit_reached">Limit reached</string>
     <string name="loading">Loading…</string>
-    <string name="boost_feed">Feed boost x10</string>
+    <string name="boost_feed">Feed Boost x10</string>
     <string name="free">Free</string>
     <string name="big_feed">Big feed</string>
     <string name="ceiling">Ceiling</string>
     <string name="progress">Progress</string>
     <string name="next_level_in">Next level in</string>
+    <string name="btn_status_ad">Ad</string>
+    <string name="btn_status_empty">Exhausted</string>
+
+    <!--Missions Screen-->
+    <string name="day">day</string>
+    <string name="days">days</string>
+    <string name="ongoing_series">Ongoing series</string>
+    <string name="offered">offered</string>
+    <string name="hunger">hunger</string>
+    <string name="tomorrow">Tomorrow : </string>
+    <string name="come_back">Come back every day to grow your streak</string>
+    <string name="open_app">Open the app today to keep your streak going</string>
+    <string name="day_reward">Reward of the day</string>
+    <string name="streak_of">Streak of</string>
+    <string name="week_streak">Day 7 : a big feed is yours !</string>
+    <string name="great">Great !</string>
+    <string name="daily_missions">Daily missions</string>
+    <string name="times">times</string>
+    <string name="stay">Stay</string>
+    <string name="during">during</string>
+    <string name="watch">Watch</string>
+    <string name="ads">ads</string>
 
     <!--Settings Screen-->
     <string name="reset_progress">Reset progress ?</string>
@@ -41,7 +64,7 @@
     <string name="activate_notifications">Activate notifications for this app</string>
     <string name="privacy_ads">Privacy &amp; Ads</string>
     <string name="manage_ads">Manage my ads choices</string>
-    <string name="update_rgpd">Modify GDPR preferences</string>
+    <string name="update_gdpr">Modify GDPR preferences</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="terms_use">Terms of use</string>
     <string name="delete_level">Delete all your levels and gains</string>

@@ -225,7 +225,7 @@ fun SettingsScreen(
                     icon = Icons.Rounded.ManageAccounts,
                     iconTint = GloubiOrange,
                     title = stringResource(R.string.manage_ads),
-                    subtitle = stringResource(R.string.update_rgpd),
+                    subtitle = stringResource(R.string.update_gdpr),
                     trailing = { Icon(Icons.Rounded.OpenInBrowser, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp)) },
                     onClick = onOpenConsentForm
                 )

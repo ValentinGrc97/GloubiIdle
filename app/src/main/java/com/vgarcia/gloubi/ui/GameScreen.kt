@@ -13,12 +13,15 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,16 +29,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.RocketLaunch
-import androidx.compose.material.icons.rounded.AutoMode
+import androidx.compose.material.icons.rounded.Autorenew
+import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Egg
-import androidx.compose.material.icons.rounded.PlayCircle
 import androidx.compose.material.icons.rounded.RiceBowl
 import androidx.compose.material.icons.rounded.Settings
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -44,7 +46,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -52,17 +53,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -72,7 +74,6 @@ import com.vgarcia.gloubi.data.GameConfig
 import com.vgarcia.gloubi.data.Player
 import com.vgarcia.gloubi.ui.theme.GloubiBackground
 import com.vgarcia.gloubi.ui.theme.GloubiGreen
-import com.vgarcia.gloubi.ui.theme.GloubiGreenDark
 import com.vgarcia.gloubi.ui.theme.GloubiOrange
 import com.vgarcia.gloubi.ui.theme.GloubiRed
 import com.vgarcia.gloubi.ui.theme.GloubiSurface
@@ -117,6 +118,33 @@ private fun FloatingParticles(modifier: Modifier = Modifier) {
     }
 }
 
+enum class ButtonStatus { FREE, AD, ACTIVE, UNAVAILABLE }
+
+@Composable
+private fun StatusPill(text: String, status: ButtonStatus) {
+    val bg = when (status) {
+        ButtonStatus.FREE        -> GloubiGreen
+        ButtonStatus.AD          -> Color(0xFFFFC107)
+        ButtonStatus.ACTIVE      -> GloubiOrange
+        ButtonStatus.UNAVAILABLE -> Color(0xFF546E7A)
+    }
+    val fg = if (status == ButtonStatus.AD) Color(0xFF1A1A00) else Color.White
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(bg)
+            .padding(horizontal = 8.dp, vertical = 2.dp)
+    ) {
+        Text(text, style = MaterialTheme.typography.labelSmall, color = fg, maxLines = 1)
+    }
+}
+
+/**
+ * Bouton d'action lisible en un coup d'œil :
+ * - couleur de l'icône = type d'action (nourrir, boost, auto...)
+ * - pastille = coût (Gratuit / Pub / Actif / Épuisé)
+ * - bordure orange = action en cours
+ */
 @Composable
 private fun ActionButton(
     modifier: Modifier = Modifier,
@@ -124,29 +152,27 @@ private fun ActionButton(
     enabled: Boolean = true,
     active: Boolean = false,
     urgent: Boolean = false,
-    icon: @Composable () -> Unit,
-    label: String,
-    sub: String? = null,
-    secondIcon: (@Composable () -> Unit)? = null
+    icon: ImageVector,
+    accent: Color,
+    title: String,
+    detail: String? = null,
+    statusText: String,
+    status: ButtonStatus
 ) {
     val haptic = LocalHapticFeedback.current
-
-    val infiniteTransition = rememberInfiniteTransition(label = "pulse_$label")
     val pulse = if (urgent && enabled) {
-        infiniteTransition.animateFloat(
-            initialValue = 0.92f, targetValue = 1f,
+        rememberInfiniteTransition(label = "pulse_$title").animateFloat(
+            initialValue = 0.94f, targetValue = 1f,
             animationSpec = infiniteRepeatable(tween(600, easing = FastOutSlowInEasing), RepeatMode.Reverse),
             label = "pulseVal"
         ).value
-    } else {
-        1f
-    }
+    } else 1f
 
-    val gradient = when {
-        !enabled -> Brush.linearGradient(listOf(GloubiSurface2, GloubiSurface2))
-        active   -> Brush.linearGradient(listOf(GloubiOrange, Color(0xFFFF6D00)))
-        urgent   -> Brush.linearGradient(listOf(GloubiRed, GloubiOrange))
-        else     -> Brush.linearGradient(listOf(GloubiGreen, GloubiGreenDark))
+    val shape = RoundedCornerShape(18.dp)
+    val borderColor = when {
+        active  -> GloubiOrange
+        enabled -> accent.copy(alpha = 0.55f)
+        else    -> Color.Transparent
     }
 
     Button(
@@ -155,27 +181,51 @@ private fun ActionButton(
             onClick()
         },
         enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
-        shape = RoundedCornerShape(18.dp),
+        shape = shape,
+        contentPadding = PaddingValues(10.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = GloubiSurface2,
+            disabledContainerColor = GloubiSurface2.copy(alpha = 0.45f),
+            disabledContentColor = Color.White.copy(alpha = 0.5f)
+        ),
         modifier = modifier
-            .height(90.dp)
+            .height(92.dp)
             .scale(pulse)
-            .clip(RoundedCornerShape(18.dp))
-            .background(gradient)
+            .border(1.5.dp, borderColor, shape)
     ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            icon()
-            Spacer(Modifier.height(2.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White)
-
-            if (secondIcon != null) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
-                    Spacer(Modifier.width(5.dp))
-                    secondIcon()
+        Row(
+            Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                Modifier
+                    .size(38.dp)
+                    .clip(CircleShape)
+                    .background(accent.copy(alpha = if (enabled) 0.22f else 0.08f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, Modifier.size(22.dp), tint = if (enabled) accent else Color.White.copy(alpha = 0.4f))
+            }
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = Color.White,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (detail != null) {
+                    Text(
+                        detail,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.7f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
-            } else {
-                if (sub != null) Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.8f))
+                Spacer(Modifier.height(4.dp))
+                StatusPill(statusText, status)
             }
         }
     }
@@ -396,69 +446,88 @@ fun GameScreen(
                     }
                 }
 
-                // Grille 2×2
-                val half = Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                // Grille 2×2 : couleur = type d'action, pastille = coût
+                val half = Modifier.weight(1f)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ActionButton(
+                        modifier = half,
                         onClick = onFeed,
                         urgent = critical,
                         active = boosted,
-                        icon = { Icon(Icons.Rounded.Egg, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = stringResource(R.string.feed),
-                        sub = if (boosted) "+${GameConfig.FEED_BOOST} %" else "+${GameConfig.FEED_SMALL} %",
-                        modifier = half,
+                        icon = Icons.Rounded.Egg,
+                        accent = GloubiGreen,
+                        title = stringResource(R.string.feed),
+                        detail = if (boosted) "+${GameConfig.FEED_BOOST} %" else "+${GameConfig.FEED_SMALL} %",
+                        statusText = if (boosted) stringResource(R.string.boosted_active) else stringResource(R.string.free),
+                        status = if (boosted) ButtonStatus.ACTIVE else ButtonStatus.FREE
                     )
                     ActionButton(
+                        modifier = half,
                         onClick = onWatchBoostAd,
                         enabled = freeBoostAvailable || (adReady && adsLeft > 0),
                         active = boosted,
-                        icon = { Icon(Icons.Outlined.RocketLaunch, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = when {
-                            boosted               -> stringResource(R.string.boosted_active)
-                            adsLeft <= 0          -> stringResource(R.string.limit_reached)
-                            !adReady              -> stringResource(R.string.loading)
-                            else                  -> stringResource(R.string.boost_feed)
+                        icon = Icons.Rounded.Bolt,
+                        accent = Color(0xFF4FC3F7),
+                        title = stringResource(R.string.boost_feed),
+                        detail = "${GameConfig.BOOST_MS / 60_000L} min",
+                        statusText = when {
+                            boosted            -> "⏱ $boostLabel"
+                            freeBoostAvailable -> stringResource(R.string.free)
+                            adsLeft <= 0       -> stringResource(R.string.btn_status_empty)
+                            adReady            -> "${stringResource(R.string.btn_status_ad)} · $adsLeft ${stringResource(R.string.remaining)}"
+                            else               -> stringResource(R.string.loading)
                         },
-                        sub = when {
-                            freeBoostAvailable -> "${(GameConfig.BOOST_MS/1000/60)} min · " + stringResource(R.string.free)
-                            boosted            -> stringResource(R.string.add) + " ${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
-                            adsLeft > 0 && adReady -> "${(GameConfig.BOOST_MS/1000/60)} min · $adsLeft " + stringResource(R.string.left)
-                            else               -> null
-                        },
-                        modifier = half,
-                        secondIcon = if (adsLeft > 0 && !freeBoostAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
+                        status = when {
+                            boosted            -> ButtonStatus.ACTIVE
+                            freeBoostAvailable -> ButtonStatus.FREE
+                            adReady && adsLeft > 0 -> ButtonStatus.AD
+                            else               -> ButtonStatus.UNAVAILABLE
+                        }
                     )
                 }
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     ActionButton(
+                        modifier = half,
                         onClick = onFeedBig,
                         enabled = freeBigFeedAvailable || adReady,
-                        icon = { Icon(Icons.Rounded.RiceBowl, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = if (freeBigFeedAvailable || adReady) stringResource(R.string.big_feed) else stringResource(R.string.loading),
-                        sub = when {
-                            freeBigFeedAvailable -> "+${GameConfig.FEED_BIG}% · " + stringResource(R.string.free)
-                            adReady              -> "+${GameConfig.FEED_BIG}%"
-                            else                 -> null
+                        icon = Icons.Rounded.RiceBowl,
+                        accent = Color(0xFF9CCC65),
+                        title = stringResource(R.string.big_feed),
+                        detail = "+${GameConfig.FEED_BIG.toInt()} %",
+                        statusText = when {
+                            freeBigFeedAvailable -> stringResource(R.string.free)
+                            adReady              -> stringResource(R.string.btn_status_ad)
+                            else                 -> stringResource(R.string.loading)
                         },
-                        modifier = half,
-                        secondIcon = if (!freeBigFeedAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
+                        status = when {
+                            freeBigFeedAvailable -> ButtonStatus.FREE
+                            adReady              -> ButtonStatus.AD
+                            else                 -> ButtonStatus.UNAVAILABLE
+                        }
                     )
                     ActionButton(
+                        modifier = half,
                         onClick = onToggleAutoFeed,
                         enabled = freeAutoFeedAvailable || adReady,
                         active = autoActive,
-                        icon = { Icon(Icons.Rounded.AutoMode, null, Modifier.size(22.dp), tint = Color.White) },
-                        label = if (autoActive) "Auto $autoLabel" else "Auto OFF",
-                        sub = when {
-                            freeAutoFeedAvailable  -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min · " + stringResource(R.string.free)
-                            autoActive             -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min · " + stringResource(R.string.ceiling) + " $autoCapLabel"
-                            adReady                -> "+${(GameConfig.AUTO_FEED_REWARD_MS/1000/60)} min"
-                            else                   -> null
+                        icon = Icons.Rounded.Autorenew,
+                        accent = Color(0xFFBA68C8),
+                        title = stringResource(R.string.auto_feed),
+                        detail = if (autoActive)
+                            "+${GameConfig.AUTO_FEED_REWARD_MS / 60_000L} min · max $autoCapLabel"
+                        else "+${GameConfig.AUTO_FEED_REWARD_MS / 60_000L} min",
+                        statusText = when {
+                            autoActive            -> "⏱ $autoLabel"
+                            freeAutoFeedAvailable -> stringResource(R.string.free)
+                            adReady               -> stringResource(R.string.btn_status_ad)
+                            else                  -> stringResource(R.string.loading)
                         },
-                        modifier = half,
-                        secondIcon = if (!freeAutoFeedAvailable && adReady) ({ Icon(Icons.Rounded.PlayCircle, null, Modifier.size(16.dp), tint = Color.White) }) else null
+                        status = when {
+                            autoActive            -> ButtonStatus.ACTIVE
+                            freeAutoFeedAvailable -> ButtonStatus.FREE
+                            adReady               -> ButtonStatus.AD
+                            else                  -> ButtonStatus.UNAVAILABLE
+                        }
                     )
                 }
 
@@ -520,6 +589,18 @@ fun GameScreen(
             }
         }
 
+        // Toucher en dehors de la vue des missions la ferme (même effet que le bouton OK)
+        if (showMissionsDialog) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) { showMissionsDialog = false }
+            )
+        }
+
         Column {
             Box {
                 // Liste missions
@@ -528,7 +609,14 @@ fun GameScreen(
                         visible = showMissionsDialog,
                         enter = fadeIn() + slideInVertically()
                     ) {
-                        GloubiCard(Modifier.fillMaxWidth()) {
+                        GloubiCard(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null
+                                ) { }
+                        ) {
                             Column(
                                 Modifier.padding(8.dp),
                                 verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -539,7 +627,7 @@ fun GameScreen(
                                 )
                                 MissionsCard(player = player, todayDay = nowMs / 86_400_000L)
                                 Spacer(Modifier.height(6.dp))
-                                OutlinedButton(onClick = {
+                                OutlinedButton(modifier = Modifier.align(Alignment.CenterHorizontally), onClick = {
                                     showMissionsDialog = false
                                 }) { Text("OK") }
                             }
