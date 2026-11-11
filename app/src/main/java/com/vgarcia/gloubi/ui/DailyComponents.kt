@@ -90,11 +90,11 @@ fun StreakBadge(streak: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Carte de série : badge + ce que la prochaine connexion rapporte (la peur de perdre la série). */
+/** Carte de série : badge + ce que la prochaine connexion rapporte. */
 @Composable
 fun StreakCard(streak: Int, loggedInToday: Boolean, modifier: Modifier = Modifier) {
     val nextIndex = GameConfig.streakDayIndex(streak + 1)
-    val nextText = if (nextIndex == GameConfig.STREAK_BIG_FEED_DAY) stringResource(R.string.big_feed) + stringResource(R.string.offered)
+    val nextText = if (nextIndex == GameConfig.STREAK_BIG_FEED_DAY) stringResource(R.string.big_feed) + " " + stringResource(R.string.offered)
     else "+${GameConfig.streakSatietyBonus(nextIndex).toInt()} % " + stringResource(R.string.hunger)
 
     Card(

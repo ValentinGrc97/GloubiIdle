@@ -134,6 +134,11 @@ fun AnimalView(
         val i6 = rememberInfiniteTransition(label = "flip")
         i6.animateFloat(0f, 1f, infiniteRepeatable(tween(1100, easing = FastOutSlowInEasing), RepeatMode.Restart), label = "flipT").value
     } else 0f
+    val fireT = if (!isPreview) {
+        rememberInfiniteTransition(label = "fire").animateFloat(
+            0f, 1f, infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart), label = "fireT"
+        ).value
+    } else 0f
 
     val spinAngle = if (!isPreview) {
         val i5 = rememberInfiniteTransition(label = "spin")
@@ -268,7 +273,7 @@ fun AnimalView(
 
         // Corps de Gloubi (éventuellement en rotation)
         val drawBody: androidx.compose.ui.graphics.drawscope.DrawScope.() -> Unit = {
-            // Derrière le corps : halo fantôme, traîne ondulée, flammes du feu
+            // Derrière le corps : halo fantôme, traîne ondulée
             if (skin == "skin_ghost") {
                 drawCircle(Color(0x228C6CD8), r * 1.45f, Offset(cxAnim, cy))
                 drawCircle(Color(0x448C6CD8), r * 1.18f, Offset(cxAnim, cy))
@@ -283,15 +288,6 @@ fun AnimalView(
                 }
                 drawPath(tail, Color(0x668C6CD8))
             }
-            if (skin == "skin_fire") {
-                for (i in 0 until 8) {
-                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
-                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
-                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
-                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
-                }
-            }
-
             // oreilles
             listOf(-1f, 1f).forEachIndexed { idx, side ->
                 val earColor = if (skin == "skin_rainbow")
@@ -324,11 +320,41 @@ fun AnimalView(
             }
             // Effet skin fire : halo de flammes
             if (skin == "skin_fire") {
-                for (i in 0 until 8) {
-                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
-                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
-                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
-                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
+                val ph = fireT * 2f * PI.toFloat()
+                for (i in 0 until 7) {
+                    // Flammes réparties sur le haut du corps
+                    val a  = -PI.toFloat() * 0.95f + i * (PI.toFloat() * 0.9f / 6f)
+                    val ux = cos(a)
+                    val uy = sin(a)
+                    val vx = -uy
+                    // Oscillations à harmoniques entiers : la boucle se referme sans à-coup
+                    val flick = 1f + 0.18f * sin(ph * 2f + i * 1.7f) + 0.08f * sin(ph * 3f + i * 0.6f)
+                    val len   = r * 0.62f * flick
+                    val bx = cxAnim + ux * r * 0.78f
+                    val by = cy + uy * r * 0.78f
+                    val sway = sin(ph + i * 0.9f) * r * 0.10f
+                    val tx = bx + ux * len + vx * sway
+                    val ty = by + uy * len + ux * sway
+
+                    fun tongue(scale: Float, color: Color) {
+                        val w = r * 0.24f * scale
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(bx - vx * w, by - ux * w)
+                            quadraticTo(
+                                bx + ux * len * 0.5f - vx * w * 0.9f, by + uy * len * 0.5f - ux * w * 0.9f,
+                                tx, ty
+                            )
+                            quadraticTo(
+                                bx + ux * len * 0.5f + vx * w * 0.9f, by + uy * len * 0.5f + ux * w * 0.9f,
+                                bx + vx * w, by + ux * w
+                            )
+                            close()
+                        }
+                        drawPath(path, color)
+                    }
+                    tongue(1.0f, Color(0xDDE64A19))   // rouge-orangé, enveloppe extérieure
+                    tongue(0.68f, Color(0xEEFF9800))  // orange
+                    tongue(0.38f, Color(0xFFFFEB3B))  // jaune, cœur de la flamme
                 }
             }
             // Effet skin ice : cristaux
