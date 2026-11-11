@@ -132,13 +132,13 @@ fun LoginRewardBanner(reward: LoginReward, onDismiss: () -> Unit, modifier: Modi
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                "🎁 " + stringResource(R.string.day_reward) + " · " + stringResource(R.string.streak_of) + reward.streak + if (reward.streak > 1) stringResource(R.string.days) else stringResource(R.string.day),
+                "🎁 " + stringResource(R.string.day_reward) + " · " + stringResource(R.string.streak_of) + " ${reward.streak} " + if (reward.streak > 1) stringResource(R.string.days) else stringResource(R.string.day),
                 style = MaterialTheme.typography.titleMedium,
                 color = GloubiYellow
             )
             Text(
                 if (reward.bigFeed) stringResource(R.string.week_streak)
-                else "+${reward.satietyBonus.toInt()} %" + stringResource(R.string.hunger) + ", +${reward.coinBonus} 🪙",
+                else "+${reward.satietyBonus.toInt()} % " + stringResource(R.string.hunger) + ", +${reward.coinBonus} 🪙",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )

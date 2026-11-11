@@ -13,6 +13,9 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.coroutineScope
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -32,6 +35,14 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.time.Duration.Companion.milliseconds
+
+/** Une animation de repas, indépendante des autres : un clic rapide ne coupe plus la précédente. */
+private class FeedAnim(val boosted: Boolean) {
+    val food = Animatable(0f)                          // 0 = en haut, 1 = mangée
+    val mouth = Animatable(0f)                         // 0 = fermée, 1 = ouverte
+    val burst = Animatable(0f)                         // 0..1 expansion des éclats
+    val burstAlpha = Animatable(if (boosted) 1f else 0f)
+}
 
 /**
  * Gloubi : une boule de poils à oreilles rondes.
@@ -130,31 +141,38 @@ fun AnimalView(
     } else 0f
 
     val mouth = remember { Animatable(0f) }  // 0 = fermée, 1 = grande ouverte
-    val foodAnim = remember { Animatable(1f) }   // 0 = en haut, 1 = mangée (invisible)
+    val feedAnims = remember { mutableStateListOf<FeedAnim>() }
+    val scope = rememberCoroutineScope()
 
-    // Éclats boost
-    val burstProgress = remember { Animatable(0f) }
-    val burstAlpha    = remember { Animatable(0f) }
-
-    //Animation nourriture + éclats boost
+    // Animation nourriture : chaque repas a son animation, qui va toujours au bout.
+    // Le scope n'est pas annulé quand feedTick change (contrairement à LaunchedEffect).
     val lastFeedTick = remember { mutableIntStateOf(feedTick) }
     LaunchedEffect(feedTick) {
         if (feedTick > lastFeedTick.intValue) {
             lastFeedTick.intValue = feedTick
-            foodAnim.snapTo(0f)
-            launch { foodAnim.animateTo(1f, tween(500, easing = LinearEasing)) }
-            delay(200.milliseconds)
-            mouth.animateTo(1f, tween(300))
-            if (boosted) {
-                burstProgress.snapTo(0f)
-                burstAlpha.snapTo(1f)
-                launch { burstProgress.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
-                launch {
-                    delay(250.milliseconds)
-                    burstAlpha.animateTo(0f, tween(300))
+            val anim = FeedAnim(boosted)
+            feedAnims.add(anim)
+            scope.launch {
+                coroutineScope {
+                    launch {
+                        // La nourriture arrive à la bouche : c'est là que les éclats partent
+                        anim.food.animateTo(1f, tween(500, easing = LinearEasing))
+                        if (boosted) {
+                            launch { anim.burst.animateTo(1f, tween(500, easing = FastOutSlowInEasing)) }
+                            launch {
+                                delay(250.milliseconds)
+                                anim.burstAlpha.animateTo(0f, tween(300))
+                            }
+                        }
+                    }
+                    launch {
+                        delay(200.milliseconds)
+                        anim.mouth.animateTo(1f, tween(300))
+                        anim.mouth.animateTo(0f, tween(400))
+                    }
                 }
+                feedAnims.remove(anim)
             }
-            mouth.animateTo(0f, tween(400))
         }
     }
 
@@ -298,7 +316,20 @@ fun AnimalView(
             }
             // Reflet brillant du skin doré
             if (skin == "skin_gold") {
-                drawOval(Color(0xAAFFFFFF), Offset(cxAnim - r * 0.55f, cy - r * 0.55f), Size(r * 0.28f, r * 0.16f))
+                drawOval(
+                    Color(0xAAFFFFFF),
+                    Offset(cxAnim - r * 0.55f, cy - r * 0.55f),
+                    Size(r * 0.28f, r * 0.16f)
+                )
+            }
+            // Effet skin fire : halo de flammes
+            if (skin == "skin_fire") {
+                for (i in 0 until 8) {
+                    val a = (i.toFloat() / 8f + sparkle * 0.15f) * 2f * PI.toFloat()
+                    val flameR = r * (0.18f + 0.08f * abs(sin(a * 2f + sparkle * PI.toFloat())))
+                    drawCircle(Color(0x88FF6D00), flameR, Offset(cxAnim + cos(a) * r * 1.15f, cy + sin(a) * r * 1.05f))
+                    drawCircle(Color(0x55FFAB40), flameR * 0.5f, Offset(cxAnim + cos(a) * r * 1.2f, cy + sin(a) * r * 1.1f))
+                }
             }
             // Effet skin ice : cristaux
             if (skin == "skin_ice") {
@@ -339,12 +370,13 @@ fun AnimalView(
             // bouche
             val mx = cxAnim
             val mouthCy = cy + r * 0.40f  // centre visuel commun
+            val mouthOpen = maxOf(mouth.value, feedAnims.maxOfOrNull { it.mouth.value } ?: 0f)
 
             when {
                 // Bouche ouverte : ovale dont le centre est exactement mouthCy
-                mouth.value > 0.05f -> {
+                mouthOpen > 0.05f -> {
                     val ovalW = r * 0.40f
-                    val ovalH = r * 0.44f * mouth.value
+                    val ovalH = r * 0.44f * mouthOpen
                     drawOval(
                         Color(0xFF7A1F3D),
                         Offset(mx - ovalW / 2f, mouthCy - ovalH / 2f + r * 0.05f),
@@ -385,70 +417,73 @@ fun AnimalView(
             else         -> drawBody()
         }
 
-        // Nourriture qui tombe vers la bouche
-        if (foodAnim.value < 1f) {
-            val byStart = h * 0.02f          // légèrement hors canvas en haut
-            val byEnd   = cy + r * 0.40f     // mouthCy : centre visuel de la bouche
-            val fy = byStart + (byEnd - byStart) * foodAnim.value
-            val fr = r * 0.15f
-            when (food) {
-                "food_pizza" -> {
-                    // Triangle pizza
-                    val path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(cx, fy - fr)
-                        lineTo(cx + fr, fy + fr * 0.8f)
-                        lineTo(cx - fr, fy + fr * 0.8f)
-                        close()
+        // Nourritures qui tombent vers la bouche (une par repas en cours)
+        feedAnims.forEach { anim ->
+            if (anim.food.value < 1f) {
+                val byStart = h * 0.02f          // légèrement hors canvas en haut
+                val byEnd   = cy + r * 0.40f     // mouthCy : centre visuel de la bouche
+                val fy = byStart + (byEnd - byStart) * anim.food.value
+                val fr = r * 0.15f
+                when (food) {
+                    "food_pizza" -> {
+                        // Triangle pizza
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(cx, fy - fr)
+                            lineTo(cx + fr, fy + fr * 0.8f)
+                            lineTo(cx - fr, fy + fr * 0.8f)
+                            close()
+                        }
+                        drawPath(path, Color(0xFFFDD835))
+                        drawCircle(Color(0xFFEF5350), fr * 0.35f, Offset(cx, fy + fr * 0.1f))
                     }
-                    drawPath(path, Color(0xFFFDD835))
-                    drawCircle(Color(0xFFEF5350), fr * 0.35f, Offset(cx, fy + fr * 0.1f))
-                }
-                "food_star" -> {
-                    // Étoile dorée (5 cercles)
-                    drawCircle(Color(0xFFFFD740), fr, Offset(cx, fy))
-                    for (i in 0 until 5) {
-                        val a = (i * 72f - 90f) * PI.toFloat() / 180f
-                        drawCircle(Color(0xFFFFF176), fr * 0.4f,
-                            Offset(cx + cos(a) * fr * 0.85f, fy + sin(a) * fr * 0.85f))
+                    "food_star" -> {
+                        // Étoile dorée (5 cercles)
+                        drawCircle(Color(0xFFFFD740), fr, Offset(cx, fy))
+                        for (i in 0 until 5) {
+                            val a = (i * 72f - 90f) * PI.toFloat() / 180f
+                            drawCircle(Color(0xFFFFF176), fr * 0.4f,
+                                Offset(cx + cos(a) * fr * 0.85f, fy + sin(a) * fr * 0.85f))
+                        }
                     }
-                }
-                "food_diamond" -> {
-                    // Losange bleu
-                    val path = androidx.compose.ui.graphics.Path().apply {
-                        moveTo(cx, fy - fr * 1.2f)
-                        lineTo(cx + fr * 0.8f, fy)
-                        lineTo(cx, fy + fr * 1.2f)
-                        lineTo(cx - fr * 0.8f, fy)
-                        close()
+                    "food_diamond" -> {
+                        // Losange bleu
+                        val path = androidx.compose.ui.graphics.Path().apply {
+                            moveTo(cx, fy - fr * 1.2f)
+                            lineTo(cx + fr * 0.8f, fy)
+                            lineTo(cx, fy + fr * 1.2f)
+                            lineTo(cx - fr * 0.8f, fy)
+                            close()
+                        }
+                        drawPath(path, Color(0xFF64B5F6))
+                        drawPath(path.apply {  }, Color(0xAAFFFFFF),
+                            style = Stroke(fr * 0.15f)
+                        )
                     }
-                    drawPath(path, Color(0xFF64B5F6))
-                    drawPath(path.apply {  }, Color(0xAAFFFFFF),
-                        style = Stroke(fr * 0.15f)
-                    )
-                }
-                "food_cake" -> {
-                    // Gâteau : rectangle + triangle
-                    drawRoundRect(Color(0xFFF48FB1),
-                        Offset(cx - fr * 0.9f, fy - fr * 0.5f), Size(fr * 1.8f, fr * 1.2f),
-                        androidx.compose.ui.geometry.CornerRadius(fr * 0.2f))
-                    drawCircle(Color(0xFFFCE4EC), fr * 0.3f, Offset(cx, fy - fr * 0.9f))
-                }
-                "food_apple" -> {
-                    // Pomme rouge (déjà connue)
-                    drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx - fr * 0.18f, fy))
-                    drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx + fr * 0.18f, fy))
-                    drawCircle(Color(0xAAFF7B6B), fr * 0.3f, Offset(cx - fr * 0.22f, fy - fr * 0.38f))
-                    drawLine(Color(0xFF5C3A1E),
-                        Offset(cx + fr * 0.08f, fy - fr * 0.75f),
-                        Offset(cx + fr * 0.08f, fy - fr * 1.1f), fr * 0.12f)
-                }
-                else -> {
-                    // Croquette par défaut
-                    drawCircle(Color(0xFFD08A4E), fr, Offset(cx, fy))
-                    drawCircle(Color(0xFF9C5F2C), fr * 0.4f, Offset(cx + fr * 0.3f, fy - fr * 0.2f))
+                    "food_cake" -> {
+                        // Gâteau : rectangle + triangle
+                        drawRoundRect(Color(0xFFF48FB1),
+                            Offset(cx - fr * 0.9f, fy - fr * 0.5f), Size(fr * 1.8f, fr * 1.2f),
+                            androidx.compose.ui.geometry.CornerRadius(fr * 0.2f))
+                        drawCircle(Color(0xFFFCE4EC), fr * 0.3f, Offset(cx, fy - fr * 0.9f))
+                    }
+                    "food_apple" -> {
+                        // Pomme rouge (déjà connue)
+                        drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx - fr * 0.18f, fy))
+                        drawCircle(Color(0xFFE63A2E), fr * 0.85f, Offset(cx + fr * 0.18f, fy))
+                        drawCircle(Color(0xAAFF7B6B), fr * 0.3f, Offset(cx - fr * 0.22f, fy - fr * 0.38f))
+                        drawLine(Color(0xFF5C3A1E),
+                            Offset(cx + fr * 0.08f, fy - fr * 0.75f),
+                            Offset(cx + fr * 0.08f, fy - fr * 1.1f), fr * 0.12f)
+                    }
+                    else -> {
+                        // Croquette par défaut
+                        drawCircle(Color(0xFFD08A4E), fr, Offset(cx, fy))
+                        drawCircle(Color(0xFF9C5F2C), fr * 0.4f, Offset(cx + fr * 0.3f, fy - fr * 0.2f))
+                    }
                 }
             }
-        }
+
+        }  // fin forEach nourritures
 
         // Grosse ration (pomme)
         // byStart : juste au-dessus du canvas ; byEnd : centre de la bouche (my)
@@ -497,59 +532,62 @@ fun AnimalView(
             }
         }
 
-        // Éclats boost : explosion d'étoiles colorées + onde de choc
-        if (burstProgress.value > 0f && burstAlpha.value > 0f) {
-            val prog  = burstProgress.value
-            val alpha = burstAlpha.value
+        // Éclats boost : explosion d'étoiles colorées + onde de choc, un par repas boosté
+        feedAnims.filter { it.boosted }.forEach { anim ->
+            if (anim.burst.value > 0f && anim.burstAlpha.value > 0f) {
+                val prog  = anim.burst.value
+                val alpha = anim.burstAlpha.value
 
-            // Onde de choc : anneau qui se dilate et disparaît
-            val ringRadius = r * 0.4f + r * 1.8f * prog
-            val ringAlpha  = alpha * (1f - prog * 0.8f)
-            drawCircle(Color(0xFFFFFFFF).copy(alpha = ringAlpha * 0.6f), ringRadius, Offset(cx, cy),
-                style = Stroke(r * 0.08f * (1f - prog * 0.6f))
-            )
-            drawCircle(Color(0xFFFFD54F).copy(alpha = ringAlpha * 0.4f), ringRadius * 0.75f, Offset(cx, cy),
-                style = Stroke(r * 0.05f)
-            )
+                // Onde de choc : anneau qui se dilate et disparaît
+                val ringRadius = r * 0.4f + r * 1.8f * prog
+                val ringAlpha  = alpha * (1f - prog * 0.8f)
+                drawCircle(Color(0xFFFFFFFF).copy(alpha = ringAlpha * 0.6f), ringRadius, Offset(cx, cy),
+                    style = Stroke(r * 0.08f * (1f - prog * 0.6f))
+                )
+                drawCircle(Color(0xFFFFD54F).copy(alpha = ringAlpha * 0.4f), ringRadius * 0.75f, Offset(cx, cy),
+                    style = Stroke(r * 0.05f)
+                )
 
-            // 12 particules étoilées colorées
-            val starColors = listOf(
-                Color(0xFFFFD54F), Color(0xFFFF6B6B), Color(0xFF64B5F6),
-                Color(0xFF81C784), Color(0xFFFF80AB), Color(0xFFFFAB40),
-                Color(0xFFEA80FC), Color(0xFF80DEEA), Color(0xFFFFF176),
-                Color(0xFFFF6D00), Color(0xFF40C4FF), Color(0xFFB2FF59),
-            )
-            val numStars = 12
-            for (i in 0 until numStars) {
-                val angle   = (i.toFloat() / numStars) * 2f * PI.toFloat()
-                val dist    = r * 0.3f + r * 1.6f * prog
-                val px      = cx + cos(angle) * dist
-                val py      = cy + sin(angle) * dist
-                val starR   = r * (0.12f - prog * 0.07f)
-                val col     = starColors[i % starColors.size].copy(alpha = alpha)
+                // 12 particules étoilées colorées
+                val starColors = listOf(
+                    Color(0xFFFFD54F), Color(0xFFFF6B6B), Color(0xFF64B5F6),
+                    Color(0xFF81C784), Color(0xFFFF80AB), Color(0xFFFFAB40),
+                    Color(0xFFEA80FC), Color(0xFF80DEEA), Color(0xFFFFF176),
+                    Color(0xFFFF6D00), Color(0xFF40C4FF), Color(0xFFB2FF59),
+                )
+                val numStars = 12
+                for (i in 0 until numStars) {
+                    val angle   = (i.toFloat() / numStars) * 2f * PI.toFloat()
+                    val dist    = r * 0.3f + r * 1.6f * prog
+                    val px      = cx + cos(angle) * dist
+                    val py      = cy + sin(angle) * dist
+                    val starR   = r * (0.12f - prog * 0.07f)
+                    val col     = starColors[i % starColors.size].copy(alpha = alpha)
 
-                // Corps de l'étoile (cercle principal)
-                drawCircle(col, starR, Offset(px, py))
+                    // Corps de l'étoile (cercle principal)
+                    drawCircle(col, starR, Offset(px, py))
 
-                // 4 pointes
-                for (j in 0 until 4) {
-                    val sa = angle + (j * PI.toFloat() / 2f)
-                    drawLine(col,
-                        Offset(px + cos(sa) * starR * 0.8f, py + sin(sa) * starR * 0.8f),
-                        Offset(px + cos(sa) * starR * 2.0f, py + sin(sa) * starR * 2.0f),
-                        strokeWidth = starR * 0.5f,
-                        cap = StrokeCap.Round
-                    )
+                    // 4 pointes
+                    for (j in 0 until 4) {
+                        val sa = angle + (j * PI.toFloat() / 2f)
+                        drawLine(col,
+                            Offset(px + cos(sa) * starR * 0.8f, py + sin(sa) * starR * 0.8f),
+                            Offset(px + cos(sa) * starR * 2.0f, py + sin(sa) * starR * 2.0f),
+                            strokeWidth = starR * 0.5f,
+                            cap = StrokeCap.Round
+                        )
+                    }
+                }
+
+                // Flash central qui disparaît vite
+                if (prog < 0.3f) {
+                    val flashAlpha = alpha * (1f - prog / 0.3f)
+                    drawCircle(Color(0xFFFFFFFF).copy(alpha = flashAlpha * 0.9f), r * 0.5f * (1f - prog), Offset(cx, cy))
+                    drawCircle(Color(0xFFFFD54F).copy(alpha = flashAlpha * 0.5f), r * 0.9f * (1f - prog), Offset(cx, cy))
                 }
             }
 
-            // Flash central qui disparaît vite
-            if (prog < 0.3f) {
-                val flashAlpha = alpha * (1f - prog / 0.3f)
-                drawCircle(Color(0xFFFFFFFF).copy(alpha = flashAlpha * 0.9f), r * 0.5f * (1f - prog), Offset(cx, cy))
-                drawCircle(Color(0xFFFFD54F).copy(alpha = flashAlpha * 0.5f), r * 0.9f * (1f - prog), Offset(cx, cy))
-            }
-        }
+        }  // fin forEach éclats
 
         // étincelles quand l'animal est rassasié
         if (happy) {
