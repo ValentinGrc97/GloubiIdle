@@ -165,23 +165,8 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
 
             // Hors-ligne : la faim baisse, et les gains ne courent que tant que l'animal reste >= 95 %
             val elapsedMs = (now - saved.lastSeen).coerceIn(0L, GameConfig.MAX_OFFLINE_MS)
-            // Faim hors-ligne : auto-nourrissage actif seulement tant qu'autoFeedUntil n'est pas dépassé
-            val autoActiveMs = (min(now, saved.autoFeedUntil) - saved.lastSeen).coerceAtLeast(0L)
-            val netDecay = GameConfig.DECAY_PER_SEC * elapsedMs / 1000.0 - GameConfig.AUTO_FEED_PER_SEC * autoActiveMs / 1000.0
-            val satiety = (saved.satiety - netDecay).coerceIn(0.0, 100.0)
-            val aboveMs = if (saved.satiety >= GameConfig.GAIN_THRESHOLD)
-                min(elapsedMs.toDouble(),
-                    (saved.satiety - GameConfig.GAIN_THRESHOLD) / GameConfig.DECAY_PER_SEC * 1000.0).toLong()
-            else 0L
-            val boostedMs = (min(saved.lastSeen + aboveMs, saved.boostUntil) - saved.lastSeen).coerceIn(0L, aboveMs)
-            val gain = GameConfig.BASE_RATE * (aboveMs + boostedMs) / 1000.0
-
-            p = p.copy(
-                satiety = satiety,
-                progress = p.progress + gain,
-                coins = p.coins + gain.toInt(),
-                lastSeen = now
-            ).withMissionDayRefreshed(now)
+            val (caught, gain) = catchUp(p, now, elapsedMs)
+            p = caught.copy(lastSeen = now).withMissionDayRefreshed(now)
 
             _offlineGain.value = gain
             _player.value = p
@@ -196,6 +181,51 @@ class GameViewModel(app: Application) : AndroidViewModel(app) {
                 if (++ticks % 5 == 0) save()
             }
         }
+    }
+
+    // ── Rattrapage du temps écoulé ───────────────────────────────────────────
+
+    /**
+     * Applique au joueur le temps écoulé depuis [p].lastSeen : la faim baisse
+     * (ou monte si l'auto-nourrissage était actif), les gains sont crédités
+     * tant que l'animal est >= seuil. Retourne le joueur et les gains.
+     */
+    private fun catchUp(p: Player, now: Long, elapsedMs: Long): Pair<Player, Double> {
+        val autoActiveMs = (min(now, p.autoFeedUntil) - p.lastSeen).coerceAtLeast(0L)
+        val netDecay = GameConfig.DECAY_PER_SEC * elapsedMs / 1000.0 -
+                GameConfig.AUTO_FEED_PER_SEC * autoActiveMs / 1000.0
+        val satiety = (p.satiety - netDecay).coerceIn(0.0, 100.0)
+        val aboveMs = if (p.satiety >= GameConfig.GAIN_THRESHOLD)
+            min(elapsedMs.toDouble(),
+                (p.satiety - GameConfig.GAIN_THRESHOLD) / GameConfig.DECAY_PER_SEC * 1000.0).toLong()
+        else 0L
+        val boostedMs = (min(p.lastSeen + aboveMs, p.boostUntil) - p.lastSeen).coerceIn(0L, aboveMs)
+        val gain = GameConfig.BASE_RATE * (aboveMs + boostedMs) / 1000.0
+        val updated = p.copy(
+            satiety = satiety,
+            progress = p.progress + gain,
+            coins = p.coins + gain.toInt()
+        )
+        return updated to gain
+    }
+
+    /**
+     * Appelé à chaque retour au premier plan (MainActivity.onResume).
+     * Rattrape le temps passé en arrière-plan : la faim et les gains reflètent
+     * le temps réellement écoulé, pas l'instant de la mise en pause.
+     */
+    fun onResumed() {
+        val now = System.currentTimeMillis()
+        val current = _player.value.withMissionDayRefreshed(now)
+        val elapsedMs = (now - current.lastSeen).coerceIn(0L, GameConfig.MAX_OFFLINE_MS)
+        if (elapsedMs >= 1000L) {
+            val (caught, gain) = catchUp(current, now, elapsedMs)
+            _player.value = caught.copy(lastSeen = now)
+            // Bannière seulement pour une absence notable (évite de l'afficher à chaque bascule)
+            if (elapsedMs >= 60_000L && gain > 0) _offlineGain.value = gain
+            save()
+        }
+        processDailyLogin(now)
     }
 
     // ── Tick ─────────────────────────────────────────────────────────────────

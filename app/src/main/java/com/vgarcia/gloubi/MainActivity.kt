@@ -85,7 +85,6 @@ class MainActivity : ComponentActivity() {
                         Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED
                     )
                 }
-                val showMissions by remember { mutableStateOf(false) }
                 val shopItems by shopVm.items.collectAsState()
                 var showShop by remember { mutableStateOf(false) }
 
@@ -178,6 +177,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        gameVm.onResumed()
         if (consentRequested.compareAndSet(false, true)) requestConsentThenInitAds()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
